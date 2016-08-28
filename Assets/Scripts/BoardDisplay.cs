@@ -26,10 +26,12 @@ public class BoardDisplay : MonoBehaviour {
 
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
+    MeshCollider meshCollider;
 
     void Start () {
         meshFilter = GetComponent<MeshFilter> ();
         meshRenderer = GetComponent<MeshRenderer> ();
+        MeshCollider meshCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
     }
 
     public void DrawBoard (BoardNode[,] board) {
@@ -168,6 +170,12 @@ public class BoardDisplay : MonoBehaviour {
 
         Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width, height);
         meshRenderer.material.mainTexture = texture;
+
+        //boop the collider into updating
+        GetComponent<MeshCollider>().sharedMesh = null;
+        GetComponent<MeshCollider>().sharedMesh = meshFilter.mesh;
+
+
     }
 
     public void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {
