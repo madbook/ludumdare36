@@ -50,12 +50,7 @@ public class GameManager : MonoBehaviour
                 {
                     edges++;
                 }
-
-                if (edges == 2)
-                {
-                    Debug.Log(x + y + " two edges");
-                }
-
+                
                                                         // I don't understand why this isn't 4.
                 float newMoisture = old.moisture * (1f - (3.5f-edges) * atmosphericDiffusion);
                 float newTemperature = old.temperature * (1f - (3.5f - edges) * atmosphericDiffusion);
