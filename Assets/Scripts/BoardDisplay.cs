@@ -51,7 +51,7 @@ public class BoardDisplay : MonoBehaviour {
                 float scaledAltitude = heightMap[x, y];
                 GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Cube);
                 obj.transform.localScale = new Vector3 (1, scaledAltitude, 1);
-                obj.transform.localPosition = new Vector3 (x - width/2, scaledAltitude / 2f, y - width/2);
+                obj.transform.localPosition = new Vector3 (x - width/2 + .5f, scaledAltitude / 2f, y - width/2 + .5f);
                 obj.transform.parent = transform;
                 obj.GetComponent<Renderer>().material.color = new Color((float)(node.temperature)/50f -.5f, 0, (float)(node.moisture) / 50f - .5f);
             }
