@@ -2,8 +2,9 @@
 using System.Collections;
 
 public class BoardDisplay : MonoBehaviour {
-    public enum DisplayMode {Mesh, Cube};
+    public enum DisplayMode {Mesh, Cube, MeshWithBillboards};
     public DisplayMode displayMode;
+    public Transform camera;
 
     // Snap altitude rendering to n discrete levels
     [Range(0, 100)]
@@ -27,16 +28,12 @@ public class BoardDisplay : MonoBehaviour {
         Color[] colorMap = GenerateColorMap (board);
 
         if (displayMode == DisplayMode.Mesh) {
-            MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
-            Mesh mesh = meshData.GenerateMesh ();
-            meshFilter.sharedMesh = meshData.GenerateMesh ();
-
-            int width = board.GetLength (0);
-            int height = board.GetLength (1); 
-            Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width, height);
-            meshRenderer.material.mainTexture = texture;
+            DrawMesh (heightMap, colorMap);
         } else if (displayMode == DisplayMode.Cube) {
             DrawBoardCubes (heightMap, colorMap);
+        } else if (displayMode == DisplayMode.MeshWithBillboards) {
+            DrawMesh (heightMap, colorMap);
+            DrawBillboards (board, heightMap);
         }
     }
 
@@ -78,6 +75,18 @@ public class BoardDisplay : MonoBehaviour {
         return colorMap;
     }
 
+    public void DrawMesh (float[,] heightMap, Color[] colorMap) {
+        int width = heightMap.GetLength (0);
+        int height = heightMap.GetLength (1);
+
+        MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
+        Mesh mesh = meshData.GenerateMesh ();
+        meshFilter.sharedMesh = meshData.GenerateMesh ();
+
+        Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width, height);
+        meshRenderer.material.mainTexture = texture;
+    }
+
     public void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {
         int width = heightMap.GetLength (0);
         int height = heightMap.GetLength (1);
@@ -90,6 +99,32 @@ public class BoardDisplay : MonoBehaviour {
                 obj.transform.localPosition = new Vector3 (x - width/2 + .5f, scaledAltitude / 2f, y - width/2 + .5f);
                 obj.transform.parent = transform;
                 obj.GetComponent<Renderer>().material.color = colorMap[x + width*y];
+            }
+        }
+    }
+
+    public void DrawBillboards (BoardNode[,] board, float[,] heightMap) {
+        int width = heightMap.GetLength (0);
+        int height = heightMap.GetLength (1);
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                BoardNode node = board[x,y];
+                if (node.temperature > 50 && node.moisture > 50) {
+                    // GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Cube);
+                    GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Quad);
+                    obj.AddComponent<Billboard> ();
+                    obj.GetComponent<Billboard> ().camera = camera;
+                    // Some of this won't be necessary, since we can set up textures properly.
+                    MeshRenderer meshRenderer = obj.GetComponent<MeshRenderer> ();
+                    meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    meshRenderer.receiveShadows = false;
+
+                    obj.transform.localScale = new Vector3 (0.25f, 0.5f, 0.25f);
+                    obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + .25f, y - width/2 + .5f);
+                    obj.transform.parent = transform;
+                    obj.GetComponent<Renderer>().material.color = Color.Lerp (Color.black, Color.red, .66f);
+                }
             }
         }
     }
