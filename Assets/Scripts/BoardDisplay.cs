@@ -5,8 +5,14 @@ public class BoardDisplay : MonoBehaviour {
     public enum DisplayMode {Mesh, Cube};
     public DisplayMode displayMode;
 
+    // Snap altitude rendering to n discrete levels
+    [Range(0, 100)]
+    public int quantizationLevels;
+    [Range(1, 100)]
+    public int verticalScale;
+
     // Because the current value of altitude is in the range of 0-100; 
-    float defaultScale = 0.01f;
+    const float MAX_ALTITUDE = 100;
 
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
@@ -42,7 +48,15 @@ public class BoardDisplay : MonoBehaviour {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 BoardNode node = board[x,y];
-                heightMap[x, y] = node.altitude * defaultScale;;
+                float altitude = node.altitude / MAX_ALTITUDE;
+                if (quantizationLevels > 1) {
+                    altitude *= quantizationLevels - 1;
+                    altitude = Mathf.Round(altitude);
+                    altitude /= quantizationLevels - 1;
+                } else if (quantizationLevels == 1) {
+                    altitude = 0f;
+                }
+                heightMap[x,y] = altitude * verticalScale;
             }
         }
 
