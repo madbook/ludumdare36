@@ -85,6 +85,8 @@ public class BoardDisplay : MonoBehaviour {
 
         Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width, height);
         meshRenderer.material.mainTexture = texture;
+        MeshCollider myMC = meshFilter.gameObject.AddComponent<MeshCollider>();
+
     }
 
     public void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {
