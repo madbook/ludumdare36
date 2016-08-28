@@ -3,7 +3,6 @@ using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
-
     public int width;
     public int height;
     public enum WetDry { wet, dry };
@@ -12,6 +11,7 @@ public class GameManager : MonoBehaviour
     public ColdHot makeColdHot;
     public enum HighLow { high, low };
     public HighLow makeHighLow;
+    public bool upateEachTick = true;
 
     private float atmosphericDiffusion = .01f; //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
 
@@ -29,6 +29,10 @@ public class GameManager : MonoBehaviour
    
     void FixedUpdate()
     {
+        if (!upateEachTick) {
+            return;
+        }
+
         int width = board.GetLength(0);
         int height = board.GetLength(1);
 
