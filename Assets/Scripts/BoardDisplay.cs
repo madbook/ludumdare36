@@ -17,7 +17,9 @@ public class BoardDisplay : MonoBehaviour {
 				obj.transform.localScale = new Vector3 (1, scaledAltitude, 1);
 				obj.transform.localPosition = new Vector3 (x, scaledAltitude / 2f, y);
 				obj.transform.parent = transform;
-			}
+                obj.GetComponent<Renderer>().material.color = new Color((float)(node.temperature)/50f -.5f, 0, (float)(node.moisture) / 50f - .5f);
+
+            }
 		}
 	}
 }

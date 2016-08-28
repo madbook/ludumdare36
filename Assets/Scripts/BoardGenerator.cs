@@ -2,17 +2,23 @@
 using System.Collections;
 
 public static class BoardGenerator {
-	public static BoardNode[,] GenerateBoard (int width, int height, int seed) {
+    private const float ALTITUDE_Y_OFFSET = 1234;
+    private const float MOISTURE_Y_OFFSET = 2234;
+    private const float TEMPERATURE_Y_OFFSET = 3234;
+
+    public static BoardNode[,] GenerateBoard (int width, int height, int seed) {
 		BoardNode[,] board = new BoardNode[width, height];
 		
-		System.Random prng = new System.Random(seed);
-
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
-				int altitude = prng.Next (0, 100);
-				int moisture = prng.Next (0, 100);
-				int temperature = prng.Next (0, 100);
-				board[x,y] = new BoardNode (altitude, moisture, temperature);
+     
+                int altitude = (int)(100*Mathf.PerlinNoise((float)x/10, (float)(y+ALTITUDE_Y_OFFSET)/ 10));
+                int moisture = (int)(100 * Mathf.PerlinNoise((float)x / 10, (float)(y + MOISTURE_Y_OFFSET) / 10));
+                int temperature = (int)(100 * Mathf.PerlinNoise((float)x / 10, (float)(y + TEMPERATURE_Y_OFFSET) / 10));
+
+                Debug.Log(x + ", " + y + " alt: " + altitude + " moisture: " + moisture + " temp: " + temperature);
+
+                board[x,y] = new BoardNode (altitude, moisture, temperature);
 			}
 		}
 
