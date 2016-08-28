@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
     public enum HighLow { high, low };
     public HighLow makeHighLow;
 
+    private float atmosphericDiffusion = .01f; //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
+
     BoardNode[,] board;
 
     void Start()
@@ -24,7 +26,68 @@ public class GameManager : MonoBehaviour
             display.DrawBoard(board);
         }
     }
+   
+    void FixedUpdate()
+    {
+        int width = board.GetLength(0);
+        int height = board.GetLength(1);
 
+        BoardNode[, ] board_after = new BoardNode[width, height];
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                BoardNode old = board[x, y];
+
+                // If a tile is on the edge, it's starting condition is weighed more (since there isn't diffusion from off the board).
+                float edges = 0;
+                if(x == 0 || x == width - 1)
+                {
+                    edges++;
+                }
+                if (y == 0 || y == height - 1)
+                {
+                    edges++;
+                }
+
+                if (edges == 2)
+                {
+                    Debug.Log(x + y + " two edges");
+                }
+
+                                                        // I don't understand why this isn't 4.
+                float newMoisture = old.moisture * (1f - (3.5f-edges) * atmosphericDiffusion);
+                float newTemperature = old.temperature * (1f - (3.5f - edges) * atmosphericDiffusion);
+                
+                 if (x > 0)
+                 {
+                    newMoisture += board[x - 1, y].moisture * atmosphericDiffusion;
+                    newTemperature += board[x - 1, y].temperature * atmosphericDiffusion;
+                 }
+                 if (x < width-1)
+                 {
+                    newMoisture += board[x + 1, y].moisture * atmosphericDiffusion;
+                    newTemperature += board[x + 1, y].temperature * atmosphericDiffusion;
+                 }
+                 if (y > 0)
+                 {
+                    newMoisture +=board[x, y-1].moisture * atmosphericDiffusion;
+                    newTemperature += board[x, y-1].temperature * atmosphericDiffusion;
+                 }
+                if (y < height-1)
+                 {
+                    newMoisture += board[x, y + 1].moisture * atmosphericDiffusion;
+                    newTemperature += board[x, y + 1].temperature * atmosphericDiffusion;
+                 }
+                board_after[x, y] = new BoardNode(old.altitude, (int)newMoisture, (int)newTemperature, old.wind);
+            }
+            
+        }
+        board = board_after;
+        FindObjectOfType<BoardDisplay>().DrawBoard(board);
+    }
+    
     void Update()
     {
         bool Clicked = false;
