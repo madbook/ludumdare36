@@ -9,21 +9,39 @@ public class BoardDisplay : MonoBehaviour {
     public Transform camera;
 
     // These could be set up in the inspector UI, but for now I'll build them here.
-    Color tundraColor = new Color (.7f, .65f, .75f);
     Color desertColor = new Color (1, .85f, .5f);
-    Color rainForestColor = new Color (.25f, .5f, 0);
-    Color forestColor = new Color (0f, 1f, .25f);
     Color iceShelfColor = new Color (1, 1, 1);
-    Color oceanColor = new Color (0, .25f, 1);
+    Color tundraColor = new Color (.7f, .65f, .75f);
+    Color rainForestColor = new Color (.25f, .5f, 0);
+    Color deepWaterColor = new Color (0, .25f, 1);
+    Color shallowWaterColor = new Color (0, .5f, 1);
+    Color forestColor = new Color (0f, .75f, .25f);
+    Color mountainForestColor = new Color (.5f, .5f, .25f);
+    Color swampColor = new Color (.25f, .25f, .15f);
+    Color plainsColor = new Color (.5f, .75f, .25f);
+    Color borealColor = new Color (.25f, .5f, .5f);
+    Color mountainBorealColor = new Color (.65f, .75f, .75f);
+
     // To help spot holes in biome coverage.
     Color defaultColor = Color.magenta;
 
-    Biome desertBiome = new Biome (MoistureBiome.Dry, TemperatureBiome.Any);
-    Biome tundraBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Cold);
-    Biome forestBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any);
-    Biome rainForestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Tropical);
-    Biome oceanBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any);
-    Biome iceShelfBiome = new Biome (MoistureBiome.Water, TemperatureBiome.Any);
+    // Any temperature, any altitude.
+    Biome desertBiome = new Biome (MoistureBiome.Dry, TemperatureBiome.Any, AltitudeBiome.Any);
+    Biome iceShelfBiome = new Biome (MoistureBiome.Water, TemperatureBiome.Any, AltitudeBiome.Any);
+
+    // Any altitude.
+    Biome tundraBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Cold, AltitudeBiome.Any);
+    Biome rainForestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Tropical, AltitudeBiome.Any);
+ 
+    // Any temperature.
+    Biome deepWaterBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Valley);
+    Biome shallowWaterBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Plain);
+    Biome forestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Hill);
+    Biome mountainForestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Mountain);
+    Biome swampBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Valley);
+    Biome plainsBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Plain);
+    Biome borealBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Hill);
+    Biome mountainBorealBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Mountain);
 
     // TODO - Can simplify the logic that that selects the biome by creating a dictionary
     // that ties biomes to colors, but I don't think that works with the "Any" types.  Will
@@ -120,24 +138,35 @@ public class BoardDisplay : MonoBehaviour {
                 Color color;
                 if (biome == desertBiome) {
                     color = desertColor;
-                } else if (biome == tundraBiome) {
-                    color = tundraColor;
-                } else if (biome == forestBiome) {
-                    color = forestColor;
-                } else if (biome == rainForestBiome) {
-                    color = rainForestColor;
-                } else if (biome == oceanBiome) {
-                    color = oceanColor;
                 } else if (biome == iceShelfBiome) {
                     color = iceShelfColor;
+                } else if (biome == tundraBiome) {
+                    color = tundraColor;
+                } else if (biome == rainForestBiome) {
+                    color = rainForestColor;
+                } else if (biome == deepWaterBiome) {
+                    color = deepWaterColor;
+                } else if (biome == shallowWaterBiome) {
+                    color = shallowWaterColor;
+                } else if (biome == forestBiome) {
+                    color = forestColor;
+                } else if (biome == mountainForestBiome) {
+                    color = mountainForestColor;
+                } else if (biome == swampBiome) {
+                    color = swampColor;
+                } else if (biome == plainsBiome) {
+                    color = plainsColor;
+                } else if (biome == borealBiome) {
+                    color = borealColor;
+                } else if (biome == mountainBorealBiome) {
+                    color = mountainBorealColor;
                 } else {
+                    // Debug.Log ("moist: " + biome.moisture + " temp: " + biome.temperature + " alt: " + biome.altitude);
                     color = defaultColor;
                 }
 
-                float scaledAltitude = node.altitude / MAX_ALTITUDE;
-                Color color2 = Color.Lerp (Color.black, Color.white, scaledAltitude);
-
-                colorMap[x + width*y] = Color.Lerp (color, color2, .5f);
+                Color color2 = Color.Lerp (Color.black, Color.white, node.altitude / MAX_ALTITUDE);
+                colorMap[x + width*y] = Color.Lerp (color, color2, .33f);
             }
         }
 

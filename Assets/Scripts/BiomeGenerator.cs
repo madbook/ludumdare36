@@ -21,7 +21,7 @@ public static class BiomeGenerator {
     public static Biome GetBiome (BoardNode node) {
         float scaledTemp = node.temperature / BOARD_NODE_SCALE;
         float scaledMoist = node.moisture / BOARD_NODE_SCALE;
-        
+        float scaledAlt = node.altitude / BOARD_NODE_SCALE;
         float moistureOffset = scaledMoist - scaledTemp/3;
         
         MoistureBiome moistureCategory;
@@ -46,26 +46,42 @@ public static class BiomeGenerator {
             temperatureCategory = TemperatureBiome.Tropical;
         }
 
-        return new Biome (moistureCategory, temperatureCategory);
+        AltitudeBiome altitudeCategory;
+
+        if (scaledAlt < .25f) {
+            altitudeCategory = AltitudeBiome.Valley;
+        } else if (scaledAlt < .5f) {
+            altitudeCategory = AltitudeBiome.Plain;
+        } else if (scaledAlt < .75f) {
+            altitudeCategory = AltitudeBiome.Hill;
+        } else {
+            altitudeCategory = AltitudeBiome.Mountain;
+        }
+
+        return new Biome (moistureCategory, temperatureCategory, altitudeCategory);
     }
 }
 
 public enum MoistureBiome {Dry, Moist, Wet, Water, Any};
 public enum TemperatureBiome {Cold, Temperate, Tropical, Any};
+public enum AltitudeBiome {Valley, Plain, Hill, Mountain, Any};
 
 public struct Biome {
     public readonly MoistureBiome moisture;
     public readonly TemperatureBiome temperature;
+    public readonly AltitudeBiome altitude;
 
-    public Biome (MoistureBiome moisture, TemperatureBiome temperature) {
+    public Biome (MoistureBiome moisture, TemperatureBiome temperature, AltitudeBiome altitude) {
         this.moisture = moisture;
         this.temperature = temperature;
+        this.altitude = altitude;
     }
 
     public static bool operator == (Biome a, Biome b) {
         return (
             (a.moisture == b.moisture || a.moisture == MoistureBiome.Any || b.moisture == MoistureBiome.Any) &&
-            (a.temperature == b.temperature || a.temperature == TemperatureBiome.Any || b.temperature == TemperatureBiome.Any)
+            (a.temperature == b.temperature || a.temperature == TemperatureBiome.Any || b.temperature == TemperatureBiome.Any) &&
+            (a.altitude == b.altitude || a.altitude == AltitudeBiome.Any || b.altitude == AltitudeBiome.Any)
         );
     }
 
