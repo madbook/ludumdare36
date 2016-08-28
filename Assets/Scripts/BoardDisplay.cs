@@ -8,12 +8,26 @@ public class BoardDisplay : MonoBehaviour {
     public ColorMode colorMode;
     public Transform camera;
 
+    // These could be set up in the inspector UI, but for now I'll build them here.
     Color tundraColor = new Color (.7f, .65f, .75f);
     Color desertColor = new Color (1, .85f, .5f);
     Color rainForestColor = new Color (.25f, .5f, 0);
     Color forestColor = new Color (0f, 1f, .25f);
     Color iceShelfColor = new Color (1, 1, 1);
     Color oceanColor = new Color (0, .25f, 1);
+    // To help spot holes in biome coverage.
+    Color defaultColor = Color.magenta;
+
+    Biome desertBiome = new Biome (MoistureBiome.Dry, TemperatureBiome.Any);
+    Biome tundraBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Cold);
+    Biome forestBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any);
+    Biome rainForestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Tropical);
+    Biome oceanBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any);
+    Biome iceShelfBiome = new Biome (MoistureBiome.Water, TemperatureBiome.Any);
+
+    // TODO - Can simplify the logic that that selects the biome by creating a dictionary
+    // that ties biomes to colors, but I don't think that works with the "Any" types.  Will
+    // need to enumrate all the biome combinations for that to work (I think);
 
     // Snap altitude rendering to n discrete levels
     [Range(0, 100)]
@@ -93,9 +107,6 @@ public class BoardDisplay : MonoBehaviour {
         return colorMap;
     }
 
-    enum MoistureBiomeCategory {Desert, Forest, Water, Ice};
-    enum TemperatureBiomeCategory {Freezing, Temperate, Tropical};
-
     Color[] GenerateBiomeColorMap (BoardNode[,] board) {
         int width = board.GetLength (0);
         int height = board.GetLength (1);
@@ -104,56 +115,28 @@ public class BoardDisplay : MonoBehaviour {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 BoardNode node = board[x,y];
-
-                float scaledTemp = node.temperature / MAX_ALTITUDE;
-                float scaledMoist = node.moisture / MAX_ALTITUDE;
-                float scaledAltitude = node.altitude / MAX_ALTITUDE;
-
-                float moistureOffset = scaledMoist - scaledTemp/3;
-                MoistureBiomeCategory moistureCategory;
-
-                if (moistureOffset < 0f) {
-                    moistureCategory = MoistureBiomeCategory.Desert;
-                } else if (moistureOffset < .33f) {
-                    moistureCategory = MoistureBiomeCategory.Forest;
-                } else if (moistureOffset < .66f) {
-                    moistureCategory = MoistureBiomeCategory.Water;
-                } else {
-                    moistureCategory = MoistureBiomeCategory.Ice;
-                }
-
-                TemperatureBiomeCategory temperatureCategory;
-
-                if (scaledTemp < .33f) {
-                    temperatureCategory = TemperatureBiomeCategory.Freezing;
-                } else if (scaledTemp < .66f) {
-                    temperatureCategory = TemperatureBiomeCategory.Temperate;
-                } else {
-                    temperatureCategory = TemperatureBiomeCategory.Tropical;
-                }
+                Biome biome = BiomeGenerator.GetBiome (node);
 
                 Color color;
-                Color color2;
-
-                if (moistureCategory == MoistureBiomeCategory.Desert) {
+                if (biome == desertBiome) {
                     color = desertColor;
-                } else if (moistureCategory == MoistureBiomeCategory.Forest) {
-                    if (temperatureCategory == TemperatureBiomeCategory.Freezing) {
-                        color = tundraColor;
-                    } else {
-                        color = forestColor;
-                    }
-                } else if (moistureCategory == MoistureBiomeCategory.Water) {
-                    if (temperatureCategory == TemperatureBiomeCategory.Tropical) {
-                        color = rainForestColor;
-                    } else {
-                        color = oceanColor;
-                    }
-                } else {
+                } else if (biome == tundraBiome) {
+                    color = tundraColor;
+                } else if (biome == forestBiome) {
+                    color = forestColor;
+                } else if (biome == rainForestBiome) {
+                    color = rainForestColor;
+                } else if (biome == oceanBiome) {
+                    color = oceanColor;
+                } else if (biome == iceShelfBiome) {
                     color = iceShelfColor;
+                } else {
+                    color = defaultColor;
                 }
 
-                color2 = Color.Lerp (Color.black, Color.white, scaledAltitude);
+                float scaledAltitude = node.altitude / MAX_ALTITUDE;
+                Color color2 = Color.Lerp (Color.black, Color.white, scaledAltitude);
+
                 colorMap[x + width*y] = Color.Lerp (color, color2, .5f);
             }
         }
