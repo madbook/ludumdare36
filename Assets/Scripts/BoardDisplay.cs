@@ -30,7 +30,7 @@ public class BoardDisplay : MonoBehaviour {
             Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width, height);
             meshRenderer.material.mainTexture = texture;
         } else if (displayMode == DisplayMode.Cube) {
-            DrawBoardCubes (board, heightMap, colorMap);
+            DrawBoardCubes (heightMap, colorMap);
         }
     }
 
@@ -64,13 +64,12 @@ public class BoardDisplay : MonoBehaviour {
         return colorMap;
     }
 
-    public void DrawBoardCubes (BoardNode[,] board, float[,] heightMap, Color[] colorMap) {
-        int width = board.GetLength (0);
-        int height = board.GetLength (1);
+    public void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {
+        int width = heightMap.GetLength (0);
+        int height = heightMap.GetLength (1);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                BoardNode node = board[x,y];
                 float scaledAltitude = heightMap[x,y];
                 GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Cube);
                 obj.transform.localScale = new Vector3 (1, scaledAltitude, 1);
