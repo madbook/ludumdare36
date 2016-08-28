@@ -6,7 +6,7 @@ public static class BoardGenerator {
     private const float MOISTURE_Y_OFFSET = 2234;
     private const float TEMPERATURE_Y_OFFSET = 3234;
 
-    public static BoardNode[,] GenerateBoard (int width, int height, int seed) {
+    public static BoardNode[,] GenerateBoard (int width, int height) {
 		BoardNode[,] board = new BoardNode[width, height];
 		
 		for (int x = 0; x < width; x++) {
