@@ -81,6 +81,25 @@ public static class MeshGenerator {
 
         return meshData;
     }
+
+    public static MeshData GeneratePyramid (float height, float baseSize) {
+        MeshData meshData = new MeshData (4, 3);
+
+        float baseHeight = baseSize * 1.5f;
+        float baseRemain = baseHeight - baseSize;
+        float rightOffset = Mathf.Sqrt(Mathf.Pow(baseRemain, 2) + Mathf.Pow(baseHeight/2f, 2));
+
+        meshData.AddVertex (new Vector3 (0, height/2f, 0));
+        meshData.AddVertex (new Vector3 (0, -height/2f, -baseSize));
+        meshData.AddVertex (new Vector3 (rightOffset, -height/2f, baseRemain));
+        meshData.AddVertex (new Vector3 (-rightOffset, -height/2f, baseRemain));
+
+        meshData.AddTriangle (2, 1, 0);
+        meshData.AddTriangle (3, 2, 0);
+        meshData.AddTriangle (1, 3, 0);
+
+        return meshData;
+    }
 }
 
 public class MeshData {
@@ -107,6 +126,11 @@ public class MeshData {
     public void AddVertex (Vector3 vertex, Vector2 uv) {
         verticies[vertexIndex] = vertex;
         uvs[vertexIndex] = uv;
+        vertexIndex += 1;
+    }
+
+    public void AddVertex (Vector3 vertex) {
+        verticies[vertexIndex] = vertex;
         vertexIndex += 1;
     }
 

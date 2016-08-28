@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class BoardDisplay : MonoBehaviour {
-    public enum DisplayMode {Mesh, Cube, MeshWithBillboards};
+    public enum DisplayMode {Mesh, Cube, MeshWithBillboards, MeshWithDoodads};
     public DisplayMode displayMode;
     public enum ColorMode {Biome, Debug};
     public ColorMode colorMode;
@@ -70,9 +70,10 @@ public class BoardDisplay : MonoBehaviour {
     public void DrawBoard (BoardNode[,] board) {
         float[,] heightMap = GenerateHeightMap (board);
         Color[] colorMap;
+        Biome[,] biomeMap = BiomeGenerator.GenerateBiomeData (board);
 
         if (colorMode == ColorMode.Biome) {
-            colorMap = GenerateBiomeColorMap (board);
+            colorMap = GenerateBiomeColorMap (heightMap, biomeMap);
         } else {
             colorMap = GenerateDebugColorMap (board);
         }
@@ -84,6 +85,9 @@ public class BoardDisplay : MonoBehaviour {
         } else if (displayMode == DisplayMode.MeshWithBillboards) {
             DrawMesh (heightMap, colorMap);
             DrawBillboards (board, heightMap);
+        } else if (displayMode == DisplayMode.MeshWithDoodads) {
+            DrawMesh (heightMap, colorMap);
+            DrawDoodads (heightMap, biomeMap);
         }
     }
 
@@ -125,15 +129,16 @@ public class BoardDisplay : MonoBehaviour {
         return colorMap;
     }
 
-    Color[] GenerateBiomeColorMap (BoardNode[,] board) {
-        int width = board.GetLength (0);
-        int height = board.GetLength (1);
+    Color[] GenerateBiomeColorMap (float[,] heightMap, Biome[,] biomeMap) {
+        int width = heightMap.GetLength (0);
+        int height = heightMap.GetLength (1);
 
         Color[] colorMap = new Color[width*height];
+
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                BoardNode node = board[x,y];
-                Biome biome = BiomeGenerator.GetBiome (node);
+                Biome biome = biomeMap[x,y];
+                float altitude = heightMap[x,y];
 
                 Color color;
                 if (biome == desertBiome) {
@@ -165,7 +170,7 @@ public class BoardDisplay : MonoBehaviour {
                     color = defaultColor;
                 }
 
-                Color color2 = Color.Lerp (Color.black, Color.white, node.altitude / MAX_ALTITUDE);
+                Color color2 = Color.Lerp (Color.black, Color.white, altitude);
                 colorMap[x + width*y] = Color.Lerp (color, color2, .33f);
             }
         }
@@ -229,6 +234,48 @@ public class BoardDisplay : MonoBehaviour {
                     obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + .25f, y - width/2 + .5f);
                     obj.transform.parent = transform;
                     obj.GetComponent<Renderer>().material.color = Color.Lerp (Color.black, Color.red, .66f);
+                }
+            }
+        }
+    }
+
+    public void DrawDoodads (float[,] heightMap, Biome[,] biomeMap) {
+        int width = heightMap.GetLength (0);
+        int height = heightMap.GetLength (1);
+
+        Material material = GetComponent<MeshRenderer> ().material;
+        Mesh normalBoreal = MeshGenerator.GeneratePyramid (1f, 0.3f).GenerateMesh ();
+        Mesh tallBoreal = MeshGenerator.GeneratePyramid (1.5f, 0.28f).GenerateMesh ();
+        Mesh shortBoreal = MeshGenerator.GeneratePyramid (.7f, .32f).GenerateMesh ();
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                Biome biome = biomeMap[x,y];
+                if (biome == borealBiome || biome == mountainBorealBiome || biome == mountainForestBiome) {
+                    GameObject obj = new GameObject ("Tree");
+                    obj.AddComponent<MeshRenderer> ();
+                    obj.AddComponent<MeshFilter> ();
+
+                    float heightOffset;
+                    if (biome == borealBiome) {
+                        heightOffset = .75f;
+                        obj.GetComponent<MeshFilter> ().sharedMesh = tallBoreal;
+                        obj.GetComponent<Renderer>().material = material;
+                        obj.GetComponent<Renderer>().material.color = borealColor;
+                    } else if (biome == mountainBorealBiome) {
+                        heightOffset = .5f;
+                        obj.GetComponent<MeshFilter> ().sharedMesh = normalBoreal;
+                        obj.GetComponent<Renderer>().material = material;
+                        obj.GetComponent<Renderer>().material.color = mountainBorealColor;
+                    } else {
+                        heightOffset = .35f;
+                        obj.GetComponent<MeshFilter> ().sharedMesh = shortBoreal;
+                        obj.GetComponent<Renderer>().material = material;
+                        obj.GetComponent<Renderer>().material.color = mountainForestColor;
+                    }
+
+                    obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + heightOffset, y - width/2 + .5f);
+                    obj.transform.parent = transform;
                 }
             }
         }
