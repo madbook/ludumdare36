@@ -10,7 +10,8 @@ public static class MeshGenerator {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 Vector3 position = new Vector3 (x - width/2 + .5f, heightMap[x, y], y - height/2 + .5f);
-                meshData.AddVertex (position);
+                Vector2 uv = new Vector2 (x/(float)width, y/(float)height);
+                meshData.AddVertex (position, uv);
             }
         }
 
@@ -32,19 +33,22 @@ public static class MeshGenerator {
 
 public class MeshData {
     Vector3[] verticies;
+    Vector2[] uvs;
     int[] triangles;
     int triangleIndex;
     int vertexIndex;
 
     public MeshData (int width, int height) {
         verticies = new Vector3 [width * height];
+        uvs = new Vector2 [width * height];
         triangles = new int [(width - 1) * (height - 1) * 6];
         triangleIndex = 0;
         vertexIndex = 0;
     }
 
-    public void AddVertex (Vector3 vertex) {
+    public void AddVertex (Vector3 vertex, Vector2 uv) {
         verticies[vertexIndex] = vertex;
+        uvs[vertexIndex] = uv;
         vertexIndex += 1;
     }
 
@@ -59,6 +63,7 @@ public class MeshData {
         Mesh mesh = new Mesh ();
 		mesh.vertices = verticies;
 		mesh.triangles = triangles;
+        mesh.uv = uvs;
 		mesh.RecalculateNormals ();
 		return mesh;
     }
