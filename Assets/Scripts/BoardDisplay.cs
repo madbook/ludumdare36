@@ -16,6 +16,7 @@ public class BoardDisplay : MonoBehaviour {
 
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
+    public MeshFilter bottomMeshFilter;
 
     void Start () {
         meshFilter = GetComponent<MeshFilter> ();
@@ -28,13 +29,15 @@ public class BoardDisplay : MonoBehaviour {
 
         if (displayMode == DisplayMode.Mesh) {
             MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
-            Mesh mesh = meshData.GenerateMesh ();
             meshFilter.sharedMesh = meshData.GenerateMesh ();
 
             int width = board.GetLength (0);
             int height = board.GetLength (1); 
             Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width, height);
             meshRenderer.material.mainTexture = texture;
+
+            MeshData bottomMeshData = MeshGenerator.GenerateBottomMeshData (heightMap);
+            bottomMeshFilter.sharedMesh = bottomMeshData.GenerateMesh ();
         } else if (displayMode == DisplayMode.Cube) {
             DrawBoardCubes (heightMap, colorMap);
         }
