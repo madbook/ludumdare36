@@ -5,6 +5,8 @@ public class GameManager : MonoBehaviour
 {
     public int width;
     public int height;
+    public enum BrushActions { wet, dry, cold, hot, high, low};
+    public BrushActions brush;
     public enum WetDry { wet, dry };
     public WetDry makeWetDry;
     public enum ColdHot { cold, hot };
@@ -97,13 +99,37 @@ public class GameManager : MonoBehaviour
         //key presses:
 
         // Wet
-        if (Input.GetKeyDown(KeyCode.W)) {
-            Debug.Log("wetting");
-            makeWetDry = WetDry.wet;
-        } else if(Input.GetKeyDown(KeyCode.D)) {
-            Debug.Log("drying");
-            makeWetDry = WetDry.dry;
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            brush = BrushActions.wet;
+            Debug.Log("wet");
         }
+        else if (Input.GetKeyDown(KeyCode.D))
+        {
+            brush = BrushActions.dry;
+            Debug.Log("dry");
+        }
+        else if (Input.GetKeyDown(KeyCode.H))
+        {
+            brush = BrushActions.hot;
+            Debug.Log("hot");
+        }
+        else if (Input.GetKeyDown(KeyCode.C))
+        {
+            brush = BrushActions.cold;
+            Debug.Log("cold");
+        }
+        else if (Input.GetKeyDown(KeyCode.U))
+        {
+            brush = BrushActions.high;
+            Debug.Log("high");
+        }
+        else if (Input.GetKeyDown(KeyCode.O))
+        {
+            brush = BrushActions.low;
+            Debug.Log("low");
+        }
+
 
         if (Input.GetMouseButtonDown(0)/* && Clicked == false*/)
         {
@@ -132,6 +158,7 @@ public class GameManager : MonoBehaviour
                 int col = (int)(z + height / 2 - .5);
                 Debug.Log("row: " + row + " col: " + col);
 
+                /*
                 if(makeWetDry == WetDry.wet) {
                     int old_wet =  board[row, col].moisture;
                     board[row, col].moisture += 10;
@@ -143,9 +170,50 @@ public class GameManager : MonoBehaviour
 
                     board[row, col].moisture -= 10;
                 }
+                */
 
-                BoardDisplay display = FindObjectOfType<BoardDisplay>();
-                display.DrawBoard(board);
+                int terraformStrength = 10;
+
+                switch (brush) 
+                {
+                    case BrushActions.wet:
+                        board[row, col].moisture += terraformStrength;
+                        break;
+                    case BrushActions.dry:
+                        board[row, col].moisture -= terraformStrength;
+                        break;
+                    case BrushActions.hot:
+                        board[row, col].temperature += terraformStrength;
+                        break;
+                    case BrushActions.cold:
+                        board[row, col].temperature -= terraformStrength;
+                        break;
+                    case BrushActions.high:
+                        if (row != 0 && row != width-1 && col != 0 && col != height -1)
+                        {
+                            board[row, col].altitude += 5;
+                            board[row+1, col].altitude += 2;
+                            board[row, col+1].altitude += 2;
+                            board[row-1, col].altitude += 2;
+                            board[row, col-1].altitude += 2;
+                        }
+                        
+                        break;
+                    case BrushActions.low:
+
+                        if (row != 0 && row != width - 1 && col != 0 && col != height - 1)
+                        {
+                            board[row, col].altitude -= 5;
+                            board[row + 1, col].altitude -= 2;
+                            board[row, col + 1].altitude -= 2;
+                            board[row - 1, col].altitude -= 2;
+                            board[row, col - 1].altitude -= 2;
+                        }
+                        break;
+
+                }
+
+                FindObjectOfType<BoardDisplay>().DrawBoard(board);
 
             }
         }    

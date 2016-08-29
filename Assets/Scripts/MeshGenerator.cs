@@ -77,7 +77,7 @@ public static class MeshGenerator {
         }
         // Complete the loop.
         meshData.AddTriangle (bottomVerticiesLength - 2, 0, lastVertexIndex);
-        Debug.Log ((bottomVerticiesLength - 2) + "," + 0 + "," + lastVertexIndex);
+        // Debug.Log ((bottomVerticiesLength - 2) + "," + 0 + "," + lastVertexIndex);
 
         return meshData;
     }
