@@ -37,47 +37,91 @@ public static class MeshGenerator {
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
         int numBorderVerticies = 2 * (width + height - 2);
-        MeshData meshData = new MeshData (numBorderVerticies + 1, numBorderVerticies);
+        int numVerticies = numBorderVerticies + 2*width + 2*height + 1;
+        int numTriangles = numBorderVerticies * 3 + 8;
+        MeshData meshData = new MeshData (numVerticies, numTriangles);
+
+        int[,] vertexIndicies = new int[width+2,height+2];
+        int vertexIndex = 0;
+        for (int x = -1; x <= width; x++) {
+            for (int y = -1; y <= height; y++) {
+                int edgeCount = 0;
+                if (y == -1) edgeCount += 1;
+                if (x == -1) edgeCount += 1;
+                if (y == height) edgeCount += 1;
+                if (x == width) edgeCount += 1;
+                if (edgeCount > 1) {
+                    vertexIndicies[x+1,y+1] = -1;
+                } else if (x <= 0 || y <= 0 || x >= width - 1 || y >= height - 1) {
+                    int altX = Mathf.Clamp (x, 0, width - 1);
+                    int altY = Mathf.Clamp (y, 0, height - 1);
+                    float altitude = heightMap[altX, altY];
+                    if (edgeCount > 0) {
+                        altitude -= 2f;
+                    }
+                    meshData.AddVertex (new Vector3 (x - width/2 + .5f, altitude, y - height/2 + .5f));
+                    vertexIndicies[x+1,y+1] = vertexIndex;
+                    vertexIndex++;
+                } else {
+                    vertexIndicies[x+1,y+1] = -1;
+                }
+            }
+        }
+        meshData.AddVertex (new Vector3 (0, -5, 0));
 
         for (int x = 0; x < width - 1; x++) {
             int y = 0;
-            Vector3 position = new Vector3 (x - width/2 + .5f, heightMap[x, y], y - height/2 + .5f);
-            Vector2 uv = new Vector2 (x/(float)width, y/(float)height);
-            meshData.AddVertex (position, uv);
+            int indexA = vertexIndicies[x+1,y+1];
+            int indexB = vertexIndicies[x+2,y+1];
+            int indexC = vertexIndicies[x+1,y];
+            int indexD = vertexIndicies[x+2,y];
+            // Debug.Log (x + "," + y + ": " + indexA + "," + indexB + "," + indexC + "," + indexD);
+            meshData.AddTriangle (indexA, indexB, indexC);
+            meshData.AddTriangle (indexB, indexD, indexC);
+            meshData.AddTriangle (indexC, indexD, vertexIndex);
+
+            y = height - 1;
+            indexA = vertexIndicies[x+1,y+1];
+            indexB = vertexIndicies[x+2,y+1];
+            indexC = vertexIndicies[x+1,y+2];
+            indexD = vertexIndicies[x+2,y+2];
+            // Debug.Log (x + "," + y + ": " + indexA + "," + indexB + "," + indexC + "," + indexD);
+            meshData.AddTriangle (indexA, indexC, indexB);
+            meshData.AddTriangle (indexB, indexC, indexD);
+            meshData.AddTriangle (indexD, indexC, vertexIndex);
         }
 
         for (int y = 0; y < height - 1; y++) {
-            int x = width - 1;
-            Vector3 position = new Vector3 (x - width/2 + .5f, heightMap[x, y], y - height/2 + .5f);
-            Vector2 uv = new Vector2 (x/(float)width, y/(float)height);
-            meshData.AddVertex (position, uv);
-        }
-
-        for (int x = width - 1; x > 0; x--) {
-            int y = height - 1;
-            Vector3 position = new Vector3 (x - width/2 + .5f, heightMap[x, y], y - height/2 + .5f);
-            Vector2 uv = new Vector2 (x/(float)width, y/(float)height);
-            meshData.AddVertex (position, uv);
-        }
-
-        for (int y = height - 1; y > 0; y--) {
             int x = 0;
-            Vector3 position = new Vector3 (x - width/2 + .5f, heightMap[x, y], y - height/2 + .5f);
-            Vector2 uv = new Vector2 (x/(float)width, y/(float)height);
-            meshData.AddVertex (position, uv);
+            int indexA = vertexIndicies[x+1,y+1];
+            int indexB = vertexIndicies[x+1,y+2];
+            int indexC = vertexIndicies[x,y+1];
+            int indexD = vertexIndicies[x,y+2];
+            // Debug.Log (x + "," + y + ": " + indexA + "," + indexB + "," + indexC + "," + indexD);
+            meshData.AddTriangle (indexA, indexC, indexB);
+            meshData.AddTriangle (indexB, indexC, indexD);
+            meshData.AddTriangle (indexD, indexC, vertexIndex);
+
+            x = width - 1;
+            indexA = vertexIndicies[x+1,y+1];
+            indexB = vertexIndicies[x+1,y+2];
+            indexC = vertexIndicies[x+2,y+1];
+            indexD = vertexIndicies[x+2,y+2];
+            // Debug.Log (x + "," + y + ": " + indexA + "," + indexB + "," + indexC + "," + indexD);
+            meshData.AddTriangle (indexA, indexB, indexC);
+            meshData.AddTriangle (indexB, indexD, indexC);
+            meshData.AddTriangle (indexC, indexD, vertexIndex);
         }
 
-        Vector2 bottomCenterUV = new Vector2 (.5f, .5f);
-        Vector3 bottomCenterPosition = new Vector3 (0, -5, 0);
-        meshData.AddVertex (bottomCenterPosition, bottomCenterUV);
-        int bottomVerticiesLength = meshData.verticies.Length;
-        int lastVertexIndex = bottomVerticiesLength - 1;
-        for (int i = 0; i < bottomVerticiesLength - 2; i++) {
-            meshData.AddTriangle (i, i+1, lastVertexIndex);
-        }
-        // Complete the loop.
-        meshData.AddTriangle (bottomVerticiesLength - 2, 0, lastVertexIndex);
-        Debug.Log ((bottomVerticiesLength - 2) + "," + 0 + "," + lastVertexIndex);
+        // The corners.
+        meshData.AddTriangle (vertexIndicies[1,1], vertexIndicies[1,0], vertexIndicies[0,1]);
+        meshData.AddTriangle (vertexIndicies[0,1], vertexIndicies[1,0], vertexIndex);
+        meshData.AddTriangle (vertexIndicies[width,1], vertexIndicies[width+1,1], vertexIndicies[width,0]);
+        meshData.AddTriangle (vertexIndicies[width,0], vertexIndicies[width+1,1], vertexIndex);
+        meshData.AddTriangle (vertexIndicies[1,height], vertexIndicies[0,height], vertexIndicies[1,height+1]);
+        meshData.AddTriangle (vertexIndicies[1,height+1], vertexIndicies[0,height], vertexIndex);
+        meshData.AddTriangle (vertexIndicies[width,height], vertexIndicies[width,height+1], vertexIndicies[width+1,height]);
+        meshData.AddTriangle (vertexIndicies[width+1,height], vertexIndicies[width,height+1], vertexIndex);
 
         return meshData;
     }
