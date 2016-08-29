@@ -7,6 +7,7 @@ public class BoardDisplay : MonoBehaviour {
     public enum ColorMode {Biome, Debug};
     public ColorMode colorMode;
     public Transform camera;
+    public bool hdColorMap;
 
     // These could be set up in the inspector UI, but for now I'll build them here.
     Color desertColor = new Color (1, .85f, .5f);
@@ -73,20 +74,20 @@ public class BoardDisplay : MonoBehaviour {
         Biome[,] biomeMap = BiomeGenerator.GenerateBiomeData (board);
 
         if (colorMode == ColorMode.Biome) {
-            colorMap = GenerateBiomeColorMap (heightMap, biomeMap);
+            colorMap = GenerateBiomeColorMap (board, heightMap, biomeMap, hdColorMap);
         } else {
             colorMap = GenerateDebugColorMap (board);
         }
 
         if (displayMode == DisplayMode.Mesh) {
-            DrawMesh (heightMap, colorMap);
+            DrawMesh (heightMap, colorMap, hdColorMap);
         } else if (displayMode == DisplayMode.Cube) {
             DrawBoardCubes (heightMap, colorMap);
         } else if (displayMode == DisplayMode.MeshWithBillboards) {
-            DrawMesh (heightMap, colorMap);
+            DrawMesh (heightMap, colorMap, hdColorMap);
             DrawBillboards (board, heightMap);
         } else if (displayMode == DisplayMode.MeshWithDoodads) {
-            DrawMesh (heightMap, colorMap);
+            DrawMesh (heightMap, colorMap, hdColorMap);
             DrawDoodads (heightMap, biomeMap);
         }
     }
@@ -129,56 +130,105 @@ public class BoardDisplay : MonoBehaviour {
         return colorMap;
     }
 
-    Color[] GenerateBiomeColorMap (float[,] heightMap, Biome[,] biomeMap) {
-        int width = heightMap.GetLength (0);
-        int height = heightMap.GetLength (1);
+    Color[] GenerateBiomeColorMap (BoardNode[,] board, float[,] heightMap, Biome[,] biomeMap, bool hdColorMap) {
+        int width = board.GetLength (0);
+        int height = board.GetLength (1);
 
-        Color[] colorMap = new Color[width*height];
-
+        int colorMapLength = (hdColorMap) ? width*height*4 : width*height;
+        Color[] colorMap = new Color[colorMapLength];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
+                BoardNode node = board[x,y];
                 Biome biome = biomeMap[x,y];
+                Color baseColor = ColorFromBiome (biome);
+                Color altitudeColor = Color.Lerp (Color.black, Color.white, node.altitude / MAX_ALTITUDE);
                 float altitude = heightMap[x,y];
 
-                Color color;
-                if (biome == desertBiome) {
-                    color = desertColor;
-                } else if (biome == iceShelfBiome) {
-                    color = iceShelfColor;
-                } else if (biome == tundraBiome) {
-                    color = tundraColor;
-                } else if (biome == rainForestBiome) {
-                    color = rainForestColor;
-                } else if (biome == deepWaterBiome) {
-                    color = deepWaterColor;
-                } else if (biome == shallowWaterBiome) {
-                    color = shallowWaterColor;
-                } else if (biome == forestBiome) {
-                    color = forestColor;
-                } else if (biome == mountainForestBiome) {
-                    color = mountainForestColor;
-                } else if (biome == swampBiome) {
-                    color = swampColor;
-                } else if (biome == plainsBiome) {
-                    color = plainsColor;
-                } else if (biome == borealBiome) {
-                    color = borealColor;
-                } else if (biome == mountainBorealBiome) {
-                    color = mountainBorealColor;
-                } else {
-                    // Debug.Log ("moist: " + biome.moisture + " temp: " + biome.temperature + " alt: " + biome.altitude);
-                    color = defaultColor;
-                }
+                // Original thought was to have this be on a biome-basis, e.g. to only apply it to "fluid" biomes.
+                // Each tile has a 2x2 pixel texture. If any quadrant of that texture has a neighboring tile with a
+                // greater altitude, that tile's texture is blended into that pixel.
+                if (hdColorMap) {
+                    Color colorA = baseColor;
+                    Color colorB = baseColor;
+                    Color colorC = baseColor;
+                    Color colorD = baseColor;
 
-                Color color2 = Color.Lerp (Color.black, Color.white, altitude);
-                colorMap[x + width*y] = Color.Lerp (color, color2, .33f);
+                    bool nIsHigher = y > 0 && heightMap[x,y-1] > heightMap[x,y];
+                    bool neIsHigher = y > 0 && x < width - 1 && heightMap[x+1,y-1] > heightMap[x,y];
+                    bool eIsHigher = x < width - 1 && heightMap[x+1,y] > heightMap[x,y];
+                    bool seIsHigher = x < width - 1 && y < height - 1 && heightMap[x+1,y+1] > heightMap[x,y];
+                    bool sIsHigher = y < height - 1 && heightMap[x,y+1] > heightMap[x,y];
+                    bool swIsHigher = y < height - 1 && x > 0 && heightMap[x-1,y+1] > heightMap[x,y];
+                    bool wIsHigher = x > 0 && heightMap[x-1,y] > heightMap[x,y];
+                    bool nwIsHigher = x > 0 && y > 0 && heightMap[x-1,y-1] > heightMap[x,y];
+
+                    if (nwIsHigher) { colorA = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x-1,y-1]), .5f); }
+                    else if (nIsHigher) { colorA = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x,y-1]), .5f); }
+                    else if (wIsHigher) { colorA = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x-1,y]), .5f); }
+
+                    if (neIsHigher) { colorB = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x+1,y-1]), .5f); }
+                    else if (nIsHigher) { colorB = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x,y-1]), .5f); }
+                    else if (eIsHigher) { colorB = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x+1,y]), .5f); }
+
+                    if (swIsHigher) { colorC = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x-1,y+1]), .5f); }
+                    else if (sIsHigher) { colorC = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x,y+1]), .5f); }
+                    else if (wIsHigher) { colorC = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x-1,y]), .5f); }
+
+                    if (seIsHigher) { colorD = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x+1,y+1]), .5f); }
+                    else if (sIsHigher) { colorD = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x,y+1]), .5f); }
+                    else if (eIsHigher) { colorD = Color.Lerp(baseColor, ColorFromBiome (biomeMap[x+1,y]), .5f); }
+
+                    colorMap[x*2 + width*y*4] = Color.Lerp (colorA, altitudeColor, .33f);
+                    colorMap[x*2 + width*y*4 + 1] = Color.Lerp (colorB, altitudeColor, .33f);
+                    colorMap[x*2 + width*y*4 + 2*width] = Color.Lerp (colorC, altitudeColor, .33f);
+                    colorMap[x*2 + width*y*4 + 2*width + 1] = Color.Lerp (colorD, altitudeColor, .33f);
+                } else {
+                    Color finalColor = Color.Lerp (baseColor, altitudeColor, .33f);
+                    // Debug.Log ("assigning for (" + x + "," + y + ")");
+                    colorMap[x + width*y] = finalColor;
+                }
             }
         }
 
         return colorMap;
     }
 
-    public void DrawMesh (float[,] heightMap, Color[] colorMap) {
+    public bool IsBiomeFlat (Biome biome) {
+        return true;
+        // return biome == deepWaterBiome || biome == shallowWaterBiome || biome == swampBiome;
+    }
+
+    public Color ColorFromBiome (Biome biome) {
+        if (biome == desertBiome) {
+            return desertColor;
+        } else if (biome == iceShelfBiome) {
+            return iceShelfColor;
+        } else if (biome == tundraBiome) {
+            return tundraColor;
+        } else if (biome == rainForestBiome) {
+            return rainForestColor;
+        } else if (biome == deepWaterBiome) {
+            return deepWaterColor;
+        } else if (biome == shallowWaterBiome) {
+            return shallowWaterColor;
+        } else if (biome == forestBiome) {
+            return forestColor;
+        } else if (biome == mountainForestBiome) {
+            return mountainForestColor;
+        } else if (biome == swampBiome) {
+            return swampColor;
+        } else if (biome == plainsBiome) {
+            return plainsColor;
+        } else if (biome == borealBiome) {
+            return borealColor;
+        } else if (biome == mountainBorealBiome) {
+            return mountainBorealColor;
+        } else {
+            return defaultColor;
+        }
+    }
+
+    public void DrawMesh (float[,] heightMap, Color[] colorMap, bool hdColorMap) {
         int width = heightMap.GetLength (0);
         int height = heightMap.GetLength (1);
 
@@ -186,7 +236,8 @@ public class BoardDisplay : MonoBehaviour {
         Mesh mesh = meshData.GenerateMesh ();
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
-        Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width, height);
+        int textureMultiplier = (hdColorMap) ? 2 : 1;
+        Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width * textureMultiplier, height * textureMultiplier);
         meshRenderer.material.mainTexture = texture;
 
         MeshData bottomMeshData = MeshGenerator.GenerateBottomMeshData (heightMap);
