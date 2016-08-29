@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class BoardDisplay : MonoBehaviour {
     public enum DisplayMode {Mesh, Cube, MeshWithBillboards, MeshWithDoodads};
@@ -44,15 +45,15 @@ public class BoardDisplay : MonoBehaviour {
     Biome borealBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Hill);
     Biome mountainBorealBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Mountain);
 
+    Dictionary<AltitudeBiome,int> altitudeBiomeIndices = new Dictionary<AltitudeBiome,int> ();
+
     // TODO - Can simplify the logic that that selects the biome by creating a dictionary
     // that ties biomes to colors, but I don't think that works with the "Any" types.  Will
     // need to enumrate all the biome combinations for that to work (I think);
 
     // Snap altitude rendering to n discrete levels
-    [Range(0, 100)]
-    public int quantizationLevels;
-    [Range(1, 100)]
-    public int verticalScale;
+    const int quantizationLevels = 5;
+    const int verticalScale = 4;
 
     // Because the current value of altitude is in the range of 0-100; 
     const float MAX_ALTITUDE = 100;
@@ -62,13 +63,22 @@ public class BoardDisplay : MonoBehaviour {
     public MeshFilter bottomMeshFilter;
     MeshCollider meshCollider;
 
+    public Transform waterCube;
+
     void Start () {
         meshFilter = GetComponent<MeshFilter> ();
         meshRenderer = GetComponent<MeshRenderer> ();
         MeshCollider meshCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
+
+        altitudeBiomeIndices.Add(AltitudeBiome.Valley, 0);
+        altitudeBiomeIndices.Add(AltitudeBiome.Plain, 1);
+        altitudeBiomeIndices.Add(AltitudeBiome.Hill, 2);
+        altitudeBiomeIndices.Add(AltitudeBiome.Mountain, 3);
     }
 
     public void DrawBoard (BoardNode[,] board) {
+        int width = board.GetLength (0);
+        int height = board.GetLength (1);
         float[,] heightMap = GenerateHeightMap (board);
         Color[] colorMap;
         Biome[,] biomeMap = BiomeGenerator.GenerateBiomeData (board);
@@ -90,6 +100,51 @@ public class BoardDisplay : MonoBehaviour {
             DrawMesh (heightMap, colorMap, hdColorMap);
             DrawDoodads (heightMap, biomeMap);
         }
+
+        if (waterCube != null) {
+            // Adjust the water level;
+            float waterLevel = GetWaterLevel (board, heightMap);
+            waterCube.transform.localScale = new Vector3 (width - 1, waterLevel, height - 1);
+            waterCube.transform.localPosition = new Vector3 (0, waterLevel/2, 0); 
+        }
+    }
+
+    float GetWaterLevel (BoardNode[,] board, float[,] heightMap) {
+        int width = board.GetLength (0);
+        int height = board.GetLength (1);
+        int waterLevels = 4;
+        float totalWater = 0;
+        float waterLevel = 0f;
+        int[] numberOfTilesPerLevel = new int[waterLevels];
+
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                BoardNode node = board[x,y];
+                int index = altitudeBiomeIndices[BiomeGenerator.GetAltitudeBiome(node.altitude)];
+                totalWater += node.moisture;
+                // Add volume for each level at or above this altitude.
+                for (int i = index; i < waterLevels; i++) {
+                    numberOfTilesPerLevel[i] += 1;
+                }
+            }
+        }
+
+        for (int i = 0; i < waterLevels; i++) {
+            int tiles = numberOfTilesPerLevel[i];
+            int availableVolumeOnThisLevel = tiles * 100;
+            float waterOnThisLevel = totalWater / availableVolumeOnThisLevel;
+
+            if (waterOnThisLevel > 1f) {
+                waterLevel += 1f;
+                totalWater = totalWater - availableVolumeOnThisLevel;
+            } else {
+                waterLevel += waterOnThisLevel;
+                break;
+            }
+        }
+
+        return waterLevel;
     }
 
     float[,] GenerateHeightMap (BoardNode[,] board) {
