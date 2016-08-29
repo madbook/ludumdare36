@@ -13,7 +13,7 @@ public static class MeshGenerator {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 Vector3 position = new Vector3 (x - width/2 + .5f, heightMap[x, y], y - height/2 + .5f);
-                Vector2 uv = new Vector2 (x/(float)width - uvOffsetX, y/(float)height - uvOffsetY);
+                Vector2 uv = new Vector2 (x/(float)width + uvOffsetX, y/(float)height + uvOffsetY);
                 meshData.AddVertex (position, uv);
             }
         }
