@@ -65,6 +65,8 @@ public class BoardDisplay : MonoBehaviour {
 
     public Transform waterCube;
 
+    List<GameObject> doodads = new List<GameObject> ();
+
     void Start () {
         meshFilter = GetComponent<MeshFilter> ();
         meshRenderer = GetComponent<MeshRenderer> ();
@@ -77,6 +79,11 @@ public class BoardDisplay : MonoBehaviour {
     }
 
     public void DrawBoard (BoardNode[,] board) {
+        foreach (GameObject obj in doodads) {
+            Destroy (obj);
+        }
+        doodads.Clear ();
+
         int width = board.GetLength (0);
         int height = board.GetLength (1);
         float[,] heightMap = GenerateHeightMap (board);
@@ -315,6 +322,7 @@ public class BoardDisplay : MonoBehaviour {
                 obj.transform.localPosition = new Vector3 (x - width/2 + .5f, scaledAltitude / 2f, y - width/2 + .5f);
                 obj.transform.parent = transform;
                 obj.GetComponent<Renderer>().material.color = colorMap[x + width*y];
+                doodads.Add (obj);
             }
         }
     }
@@ -340,6 +348,7 @@ public class BoardDisplay : MonoBehaviour {
                     obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + .25f, y - width/2 + .5f);
                     obj.transform.parent = transform;
                     obj.GetComponent<Renderer>().material.color = Color.Lerp (Color.black, Color.red, .66f);
+                    doodads.Add (obj);
                 }
             }
         }
@@ -382,6 +391,7 @@ public class BoardDisplay : MonoBehaviour {
 
                     obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + heightOffset, y - width/2 + .5f);
                     obj.transform.parent = transform;
+                    doodads.Add (obj);
                 }
             }
         }

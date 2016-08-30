@@ -17,12 +17,14 @@ public class GameManager : MonoBehaviour
 
     BoardNode[,] board;
 
+    BoardDisplay display;
+
     void Start()
     {
         board = BoardGenerator.GenerateBoard(width, height);
-        BoardDisplay display = FindObjectOfType<BoardDisplay>();
-        if (display != null)
-        {
+
+        display = FindObjectOfType<BoardDisplay>();
+        if (display != null) {
             display.DrawBoard(board);
         }
     }
@@ -84,7 +86,10 @@ public class GameManager : MonoBehaviour
             
         }
         board = board_after;
-        FindObjectOfType<BoardDisplay>().DrawBoard(board);
+
+        if (display != null) {
+            display.DrawBoard(board);
+        }
     }
     
     void Update()
@@ -144,9 +149,9 @@ public class GameManager : MonoBehaviour
                     board[row, col].moisture -= 10;
                 }
 
-                BoardDisplay display = FindObjectOfType<BoardDisplay>();
-                display.DrawBoard(board);
-
+                if (display != null) {
+                    display.DrawBoard(board);
+                }
             }
         }    
     }
