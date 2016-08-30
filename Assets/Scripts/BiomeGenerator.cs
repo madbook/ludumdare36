@@ -21,7 +21,6 @@ public static class BiomeGenerator {
     public static Biome GetBiome (BoardNode node) {
         float scaledTemp = node.temperature / BOARD_NODE_SCALE;
         float scaledMoist = node.moisture / BOARD_NODE_SCALE;
-        float scaledAlt = node.altitude / BOARD_NODE_SCALE;
         float moistureOffset = scaledMoist - scaledTemp/3;
         
         MoistureBiome moistureCategory;
@@ -46,19 +45,23 @@ public static class BiomeGenerator {
             temperatureCategory = TemperatureBiome.Tropical;
         }
 
-        AltitudeBiome altitudeCategory;
-
-        if (scaledAlt < .25f) {
-            altitudeCategory = AltitudeBiome.Valley;
-        } else if (scaledAlt < .5f) {
-            altitudeCategory = AltitudeBiome.Plain;
-        } else if (scaledAlt < .75f) {
-            altitudeCategory = AltitudeBiome.Hill;
-        } else {
-            altitudeCategory = AltitudeBiome.Mountain;
-        }
+        AltitudeBiome altitudeCategory = GetAltitudeBiome (node.altitude);
 
         return new Biome (moistureCategory, temperatureCategory, altitudeCategory);
+    }
+
+    public static AltitudeBiome GetAltitudeBiome (int altitude) {
+        float scaledAlt = altitude / BOARD_NODE_SCALE;
+
+        if (scaledAlt < .25f) {
+            return AltitudeBiome.Valley;
+        } else if (scaledAlt < .5f) {
+            return AltitudeBiome.Plain;
+        } else if (scaledAlt < .75f) {
+            return AltitudeBiome.Hill;
+        } else {
+            return AltitudeBiome.Mountain;
+        }
     }
 }
 

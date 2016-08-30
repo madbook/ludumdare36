@@ -57,7 +57,8 @@ public static class MeshGenerator {
                     int altY = Mathf.Clamp (y, 0, height - 1);
                     float altitude = heightMap[altX, altY];
                     if (edgeCount > 0) {
-                        altitude -= 2f;
+                        // altitude -= 2f;
+                        altitude = -1;
                     }
                     meshData.AddVertex (new Vector3 (x - width/2 + .5f, altitude, y - height/2 + .5f));
                     vertexIndicies[x+1,y+1] = vertexIndex;
