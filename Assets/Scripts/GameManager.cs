@@ -5,14 +5,10 @@ public class GameManager : MonoBehaviour
 {
     public int width;
     public int height;
-    public enum WetDry { wet, dry };
-    public WetDry makeWetDry;
-    public enum ColdHot { cold, hot };
-    public ColdHot makeColdHot;
-    public enum HighLow { high, low };
-    public HighLow makeHighLow;
+    public enum Action {Wet, Dry, Cold, Hot, Raise, Lower, Inspect};
+    public Action currentAction;
     public bool upateEachTick = true;
-
+    public int brushMagnitude = 10;
     private float atmosphericDiffusion = .01f; //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
 
     BoardNode[,] board;
@@ -96,13 +92,21 @@ public class GameManager : MonoBehaviour
 
         //key presses:
 
-        // Wet
-        if (Input.GetKeyDown(KeyCode.W)) {
-            Debug.Log("wetting");
-            makeWetDry = WetDry.wet;
-        } else if(Input.GetKeyDown(KeyCode.D)) {
-            Debug.Log("drying");
-            makeWetDry = WetDry.dry;
+        // Select Action
+        if (Input.GetKeyDown (KeyCode.W)) {
+            currentAction = Action.Wet;
+        } else if (Input.GetKeyDown (KeyCode.D)) {
+            currentAction = Action.Dry;
+        } else if (Input.GetKeyDown (KeyCode.R)) {
+            currentAction = Action.Raise;
+        } else if (Input.GetKeyDown (KeyCode.L)) {
+            currentAction = Action.Lower;
+        } else if (Input.GetKeyDown (KeyCode.H)) {
+            currentAction = Action.Hot;
+        } else if (Input.GetKeyDown (KeyCode.C)) {
+            currentAction = Action.Cold;
+        } else if (Input.GetKeyDown (KeyCode.I)) {
+            currentAction = Action.Inspect;
         }
 
         if (Input.GetMouseButtonDown(0)/* && Clicked == false*/)
@@ -132,17 +136,26 @@ public class GameManager : MonoBehaviour
                 int col = (int)(z + height / 2 - .5);
                 Debug.Log("row: " + row + " col: " + col);
 
-                if(makeWetDry == WetDry.wet) {
-                    int old_wet =  board[row, col].moisture;
-                    board[row, col].moisture += 10;
-                    Debug.Log("wetting " + row + ", " + col + " was: " + old_wet + " now: " + board[row, col].moisture);
-
+                BoardNode node = board[row, col];
+                if (currentAction == Action.Wet) {
+                    node.moisture = Mathf.Clamp (node.moisture + brushMagnitude, 0, 100);
+                } else if (currentAction == Action.Dry) {
+                    node.moisture = Mathf.Clamp (node.moisture - brushMagnitude, 0, 100);
+                } else if (currentAction == Action.Raise) {
+                    node.altitude = Mathf.Clamp (node.altitude + brushMagnitude, 0, 100);
+                } else if (currentAction == Action.Lower) {
+                    node.altitude = Mathf.Clamp (node.altitude - brushMagnitude, 0, 100);
+                } else if (currentAction == Action.Hot) {
+                    node.temperature = Mathf.Clamp (node.temperature + brushMagnitude, 0, 100);
+                } else if (currentAction == Action.Cold) {
+                    node.temperature = Mathf.Clamp (node.temperature - brushMagnitude, 0, 100);
+                } else if (currentAction == Action.Inspect) {
+                    Biome biome = BiomeGenerator.GetBiome (node);
+                    Debug.Log ("<Node (" + row + "," + col + ") moisture=" + node.moisture + " altitude=" + node.altitude + " temperature=" + node.temperature + ">");
+                    Debug.Log ("<Biome (" + row + "," + col + ") moisture=" + biome.moisture + " altitude=" + biome.altitude + " temperature=" + biome.temperature + ">");
                 }
-                if (makeWetDry == WetDry.dry) {
-                    Debug.Log("drying " + row + ", " + col);
 
-                    board[row, col].moisture -= 10;
-                }
+                board[row, col] = node;
 
                 BoardDisplay display = FindObjectOfType<BoardDisplay>();
                 display.DrawBoard(board);
