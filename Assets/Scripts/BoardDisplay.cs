@@ -11,18 +11,18 @@ public class BoardDisplay : MonoBehaviour {
     public bool hdColorMap;
 
     // These could be set up in the inspector UI, but for now I'll build them here.
-    Color desertColor = new Color (1, .85f, .5f);
-    Color iceShelfColor = new Color (1, 1, 1);
-    Color tundraColor = new Color (.7f, .65f, .75f);
-    Color rainForestColor = new Color (.25f, .5f, 0);
-    Color deepWaterColor = new Color (0, .25f, 1);
-    Color shallowWaterColor = new Color (0, .5f, 1);
-    Color forestColor = new Color (0f, .75f, .25f);
-    Color mountainForestColor = new Color (.5f, .5f, .25f);
-    Color swampColor = new Color (.25f, .25f, .15f);
-    Color plainsColor = new Color (.5f, .75f, .25f);
-    Color borealColor = new Color (.25f, .5f, .5f);
-    Color mountainBorealColor = new Color (.65f, .75f, .75f);
+    public Color desertColor = new Color (1, .85f, .5f);
+    public Color iceShelfColor = new Color (1, 1, 1);
+    public Color tundraColor = new Color (.7f, .65f, .75f);
+    public Color rainForestColor = new Color (.25f, .5f, 0);
+    public Color deepWaterColor = new Color (0, .25f, 1);
+    public Color shallowWaterColor = new Color (0, .5f, 1);
+    public Color forestColor = new Color (0f, .75f, .25f);
+    public Color mountainForestColor = new Color (.5f, .5f, .25f);
+    public Color swampColor = new Color (.25f, .25f, .15f);
+    public Color plainsColor = new Color (.5f, .75f, .25f);
+    public Color borealColor = new Color (.25f, .5f, .5f);
+    public Color mountainBorealColor = new Color (.65f, .75f, .75f);
 
     // To help spot holes in biome coverage.
     Color defaultColor = Color.magenta;
