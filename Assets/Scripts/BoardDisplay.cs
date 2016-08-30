@@ -65,6 +65,10 @@ public class BoardDisplay : MonoBehaviour {
 
     public Transform waterCube;
 
+    // These enable automatic redraw when changing values in the editor;
+    public bool autoUpdate = true;
+    BoardNode[,] lastBoard;
+
     List<GameObject> doodads = new List<GameObject> ();
 
     void Start () {
@@ -78,7 +82,15 @@ public class BoardDisplay : MonoBehaviour {
         altitudeBiomeIndices.Add(AltitudeBiome.Mountain, 3);
     }
 
+    public void DrawBoard () {
+        if (lastBoard != null) {
+            DrawBoard (lastBoard);
+        }
+    }
+
     public void DrawBoard (BoardNode[,] board) {
+        lastBoard = board;
+
         foreach (GameObject obj in doodads) {
             Destroy (obj);
         }
