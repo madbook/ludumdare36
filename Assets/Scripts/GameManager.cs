@@ -12,8 +12,10 @@ public class GameManager : MonoBehaviour
     private float atmosphericDiffusion = .01f; //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
 
     BoardNode[,] board;
-
     BoardDisplay display;
+
+    const float paintInterval = .2f;
+    bool isPaintEnabled = true;
 
     void Start()
     {
@@ -112,7 +114,7 @@ public class GameManager : MonoBehaviour
             currentAction = Action.Inspect;
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (isPaintEnabled && Input.GetMouseButton(0))
         {
             // Debug.Log("click");
 
@@ -154,6 +156,14 @@ public class GameManager : MonoBehaviour
                     display.DrawBoard(board);
                 }
             }
+
+            StartCoroutine (TemporarilyDisablePaint (paintInterval));
         }    
+    }
+
+    IEnumerator TemporarilyDisablePaint (float interval) {
+        isPaintEnabled = false;
+        yield return new WaitForSeconds (interval);
+        isPaintEnabled = true;
     }
 }
