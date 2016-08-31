@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class GameManager : MonoBehaviour
@@ -12,6 +13,7 @@ public class GameManager : MonoBehaviour
     private float atmosphericDiffusion = .01f; //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
     public bool useTemplateNode = false;
     public BoardNode templateNode;
+    public Text actionInfoText;
 
     BoardNode[,] board;
     BoardDisplay display;
@@ -30,6 +32,39 @@ public class GameManager : MonoBehaviour
         display = FindObjectOfType<BoardDisplay>();
         if (display != null) {
             display.DrawBoard(board);
+        }
+    }
+
+    void RefreshActionText () {
+        actionInfoText.text = GetActionText() + " | " + brushMagnitude;
+    }
+
+    void SetInspectText (BoardNode node, Biome biome, int x, int y) {
+        actionInfoText.text = "Inspecting {" + x + "," + y + "}: " + biome.moisture + "(" + node.moisture + ") " + biome.altitude + "(" + node.altitude + ") " + biome.temperature + "(" + node.temperature + ")";
+    }
+
+    void SetAction (Action action) {
+        currentAction = action;
+        RefreshActionText();
+    }
+
+    string GetActionText () {
+        if (currentAction == Action.Wet) {
+            return "Wet";
+        } else if (currentAction == Action.Dry) {
+            return "Dry";
+        } else if (currentAction == Action.Raise) {
+            return "Raise";
+        } else if (currentAction == Action.Lower) {
+            return "Lower";
+        } else if (currentAction == Action.Hot) {
+            return "Hot";
+        } else if (currentAction == Action.Cold) {
+            return "Cold";
+        } else if (currentAction == Action.Inspect) {
+            return "Inspect";
+        } else {
+            return "";
         }
     }
    
@@ -105,19 +140,25 @@ public class GameManager : MonoBehaviour
 
         // Select Action
         if (Input.GetKeyDown (KeyCode.W)) {
-            currentAction = Action.Wet;
+            SetAction (Action.Wet);
         } else if (Input.GetKeyDown (KeyCode.D)) {
-            currentAction = Action.Dry;
+            SetAction (Action.Dry);
         } else if (Input.GetKeyDown (KeyCode.R)) {
-            currentAction = Action.Raise;
+            SetAction (Action.Raise);
         } else if (Input.GetKeyDown (KeyCode.L)) {
-            currentAction = Action.Lower;
+            SetAction (Action.Lower);
         } else if (Input.GetKeyDown (KeyCode.H)) {
-            currentAction = Action.Hot;
+            SetAction (Action.Hot);
         } else if (Input.GetKeyDown (KeyCode.C)) {
-            currentAction = Action.Cold;
+            SetAction (Action.Cold);
         } else if (Input.GetKeyDown (KeyCode.I)) {
-            currentAction = Action.Inspect;
+            SetAction (Action.Inspect);
+        } else if (Input.GetKeyDown (KeyCode.Minus)) {
+            brushMagnitude = Mathf.Clamp (brushMagnitude - 5, 5, 100);
+            RefreshActionText ();
+        } else if (Input.GetKeyDown (KeyCode.Equals)) {
+            brushMagnitude = Mathf.Clamp (brushMagnitude + 5, 5, 100);
+            RefreshActionText ();
         }
 
         if (isPaintEnabled && Input.GetMouseButton(0))
@@ -152,8 +193,7 @@ public class GameManager : MonoBehaviour
                     node.temperature = Mathf.Clamp (node.temperature - brushMagnitude, 0, 100);
                 } else if (currentAction == Action.Inspect) {
                     Biome biome = BiomeGenerator.GetBiome (node);
-                    Debug.Log ("<Node (" + row + "," + col + ") moisture=" + node.moisture + " altitude=" + node.altitude + " temperature=" + node.temperature + ">");
-                    Debug.Log ("<Biome (" + row + "," + col + ") moisture=" + biome.moisture + " altitude=" + biome.altitude + " temperature=" + biome.temperature + ">");
+                    SetInspectText (node, biome, row, col);
                 }
 
                 board[row, col] = node;
