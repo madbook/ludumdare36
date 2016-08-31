@@ -33,6 +33,8 @@ public class GameManager : MonoBehaviour
         if (display != null) {
             display.DrawBoard(board);
         }
+
+        RefreshActionText ();
     }
 
     void RefreshActionText () {
