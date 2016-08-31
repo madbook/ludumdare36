@@ -130,7 +130,7 @@ public class BoardDisplay : MonoBehaviour {
             // Adjust the water level.  The offset is to prevent z-fighting when water and altitude are both 0.
             float waterLevelOffset = .1f;
             float waterLevel = GetWaterLevel (board, heightMap);
-            waterCube.transform.localScale = new Vector3 (width - 1, waterLevel, height - 1);
+            waterCube.transform.localScale = new Vector3 (width + 1, waterLevel, height + 1);
             waterCube.transform.localPosition = new Vector3 (0, waterLevel/2 - waterLevelOffset, 0);
         }
     }
