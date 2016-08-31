@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
     public bool upateEachTick = true;
     public int brushMagnitude = 10;
     private float atmosphericDiffusion = .01f; //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
+    public bool useTemplateNode = false;
+    public BoardNode templateNode;
 
     BoardNode[,] board;
 
@@ -17,7 +19,11 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        board = BoardGenerator.GenerateBoard(width, height);
+        if (useTemplateNode) {
+            board = BoardGenerator.CreateUniformBoard (width, height, templateNode);
+        } else {
+            board = BoardGenerator.GenerateBoard(width, height);
+        }
 
         display = FindObjectOfType<BoardDisplay>();
         if (display != null) {

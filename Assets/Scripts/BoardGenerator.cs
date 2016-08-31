@@ -30,8 +30,21 @@ public static class BoardGenerator {
 
 		return board;
 	}
+
+    public static BoardNode[,] CreateUniformBoard (int width, int height, BoardNode node) {
+        BoardNode[,] board = new BoardNode[width, height];
+
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+                board[x,y] = node;
+            }
+        }
+
+        return board;
+    }
 }
 
+[System.Serializable]
 public struct BoardNode {
 	public int altitude;
 	public int moisture;
