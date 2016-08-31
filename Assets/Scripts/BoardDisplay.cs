@@ -64,6 +64,8 @@ public class BoardDisplay : MonoBehaviour {
     MeshCollider meshCollider;
 
     public Transform waterCube;
+    public Material cloudMaterial;
+    public bool renderClouds = true;
 
     // These enable automatic redraw when changing values in the editor;
     public bool autoUpdate = true;
@@ -118,6 +120,10 @@ public class BoardDisplay : MonoBehaviour {
         } else if (displayMode == DisplayMode.MeshWithDoodads) {
             DrawMesh (heightMap, colorMap, hdColorMap);
             DrawDoodads (heightMap, biomeMap);
+        }
+
+        if (renderClouds) {
+            DrawClouds (board, heightMap);
         }
 
         if (waterCube != null) {
@@ -335,6 +341,42 @@ public class BoardDisplay : MonoBehaviour {
                 obj.transform.localPosition = new Vector3 (x - width/2 + .5f, scaledAltitude / 2f, y - width/2 + .5f);
                 obj.transform.parent = transform;
                 obj.GetComponent<Renderer>().material.color = colorMap[x + width*y];
+                doodads.Add (obj);
+            }
+        }
+    }
+
+    public void DrawClouds (BoardNode[,] board, float[,] heightMap) {
+        int width = board.GetLength (0);
+        int height = board.GetLength (1);
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                BoardNode node = board[x,y];
+                Biome biome = BiomeGenerator.GetBiome (node);
+
+                if (biome.moisture == MoistureBiome.Dry || biome.moisture == MoistureBiome.Moist) {
+                    continue;
+                }
+
+                Vector3 scale;
+
+                if (biome.moisture == MoistureBiome.Wet) {
+                    scale = new Vector3 (.75f, .25f, .75f);
+                } else {
+                    scale = new Vector3 (1f, .5f, 1f);
+                }
+                float nodeHeight = heightMap[x,y];
+                Vector3 position = new Vector3 (x - width/2 + .5f, nodeHeight/2 + 5, y - width/2 + .5f);
+
+                GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Cube);
+                MeshRenderer meshRenderer = obj.GetComponent<MeshRenderer> ();
+                meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                meshRenderer.receiveShadows = false;
+                obj.transform.localScale = scale;
+                obj.transform.localPosition = position;
+                obj.transform.parent = transform;
+                obj.GetComponent<MeshRenderer> ().sharedMaterial = cloudMaterial;
                 doodads.Add (obj);
             }
         }
