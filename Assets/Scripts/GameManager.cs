@@ -90,8 +90,6 @@ public class GameManager : MonoBehaviour
     
     void Update()
     {
-        bool Clicked = false;
-
         int width = board.GetLength(0);
         int height = board.GetLength(1);
 
@@ -114,19 +112,9 @@ public class GameManager : MonoBehaviour
             currentAction = Action.Inspect;
         }
 
-        if (Input.GetMouseButtonDown(0)/* && Clicked == false*/)
+        if (Input.GetMouseButtonDown(0))
         {
-            /*
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-
-                }
-            }
-            */
-
-            Debug.Log("click");
+            // Debug.Log("click");
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
