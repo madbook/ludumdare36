@@ -10,40 +10,7 @@ public class BoardDisplay : MonoBehaviour {
     public Transform camera;
     public bool hdColorMap;
 
-    // These could be set up in the inspector UI, but for now I'll build them here.
-    public Color desertColor = new Color (1, .85f, .5f);
-    public Color iceShelfColor = new Color (1, 1, 1);
-    public Color tundraColor = new Color (.7f, .65f, .75f);
-    public Color rainForestColor = new Color (.25f, .5f, 0);
-    public Color deepWaterColor = new Color (0, .25f, 1);
-    public Color shallowWaterColor = new Color (0, .5f, 1);
-    public Color forestColor = new Color (0f, .75f, .25f);
-    public Color mountainForestColor = new Color (.5f, .5f, .25f);
-    public Color swampColor = new Color (.25f, .25f, .15f);
-    public Color plainsColor = new Color (.5f, .75f, .25f);
-    public Color borealColor = new Color (.25f, .5f, .5f);
-    public Color mountainBorealColor = new Color (.65f, .75f, .75f);
-
-    // To help spot holes in biome coverage.
-    Color defaultColor = Color.magenta;
-
-    // Any temperature, any altitude.
-    Biome desertBiome = new Biome (MoistureBiome.Dry, TemperatureBiome.Any, AltitudeBiome.Any);
-    Biome iceShelfBiome = new Biome (MoistureBiome.Water, TemperatureBiome.Any, AltitudeBiome.Any);
-
-    // Any altitude.
-    Biome tundraBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Cold, AltitudeBiome.Any);
-    Biome rainForestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Tropical, AltitudeBiome.Any);
- 
-    // Any temperature.
-    Biome deepWaterBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Valley);
-    Biome shallowWaterBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Plain);
-    Biome forestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Hill);
-    Biome mountainForestBiome = new Biome (MoistureBiome.Wet, TemperatureBiome.Any, AltitudeBiome.Mountain);
-    Biome swampBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Valley);
-    Biome plainsBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Plain);
-    Biome borealBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Hill);
-    Biome mountainBorealBiome = new Biome (MoistureBiome.Moist, TemperatureBiome.Any, AltitudeBiome.Mountain);
+    public BiomeTheme biomeColorTheme;
 
     Dictionary<AltitudeBiome,int> altitudeBiomeIndices = new Dictionary<AltitudeBiome,int> ();
 
@@ -280,33 +247,7 @@ public class BoardDisplay : MonoBehaviour {
     }
 
     public Color ColorFromBiome (Biome biome) {
-        if (biome == desertBiome) {
-            return desertColor;
-        } else if (biome == iceShelfBiome) {
-            return iceShelfColor;
-        } else if (biome == tundraBiome) {
-            return tundraColor;
-        } else if (biome == rainForestBiome) {
-            return rainForestColor;
-        } else if (biome == deepWaterBiome) {
-            return deepWaterColor;
-        } else if (biome == shallowWaterBiome) {
-            return shallowWaterColor;
-        } else if (biome == forestBiome) {
-            return forestColor;
-        } else if (biome == mountainForestBiome) {
-            return mountainForestColor;
-        } else if (biome == swampBiome) {
-            return swampColor;
-        } else if (biome == plainsBiome) {
-            return plainsColor;
-        } else if (biome == borealBiome) {
-            return borealColor;
-        } else if (biome == mountainBorealBiome) {
-            return mountainBorealColor;
-        } else {
-            return defaultColor;
-        }
+        return biomeColorTheme.GetColor (biome);
     }
 
     public void DrawMesh (float[,] heightMap, Color[] colorMap, bool hdColorMap) {
@@ -413,38 +354,21 @@ public class BoardDisplay : MonoBehaviour {
         int width = heightMap.GetLength (0);
         int height = heightMap.GetLength (1);
 
-        Material material = GetComponent<MeshRenderer> ().material;
-        Mesh normalBoreal = MeshGenerator.GeneratePyramid (1f, 0.3f).GenerateMesh ();
-        Mesh tallBoreal = MeshGenerator.GeneratePyramid (1.5f, 0.28f).GenerateMesh ();
-        Mesh shortBoreal = MeshGenerator.GeneratePyramid (.7f, .32f).GenerateMesh ();
+        // Material material = GetComponent<MeshRenderer> ().material;
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 Biome biome = biomeMap[x,y];
-                if (biome == borealBiome || biome == mountainBorealBiome || biome == mountainForestBiome) {
-                    GameObject obj = new GameObject ("Tree");
+                BiomeTheme.Doodad doodad =biomeColorTheme.GetDoodad (biome);
+
+                if (doodad != null) {
+                    GameObject obj = new GameObject ("Biome Doodad");
                     obj.AddComponent<MeshRenderer> ();
                     obj.AddComponent<MeshFilter> ();
-
-                    float heightOffset;
-                    if (biome == borealBiome) {
-                        heightOffset = .75f;
-                        obj.GetComponent<MeshFilter> ().sharedMesh = tallBoreal;
-                        obj.GetComponent<Renderer>().material = material;
-                        obj.GetComponent<Renderer>().material.color = borealColor;
-                    } else if (biome == mountainBorealBiome) {
-                        heightOffset = .5f;
-                        obj.GetComponent<MeshFilter> ().sharedMesh = normalBoreal;
-                        obj.GetComponent<Renderer>().material = material;
-                        obj.GetComponent<Renderer>().material.color = mountainBorealColor;
-                    } else {
-                        heightOffset = .35f;
-                        obj.GetComponent<MeshFilter> ().sharedMesh = shortBoreal;
-                        obj.GetComponent<Renderer>().material = material;
-                        obj.GetComponent<Renderer>().material.color = mountainForestColor;
-                    }
-
-                    obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + heightOffset, y - width/2 + .5f);
+                    obj.GetComponent<MeshFilter> ().sharedMesh = doodad.mesh;
+                    obj.GetComponent<Renderer>().material = doodad.material;
+                    obj.GetComponent<Renderer>().material.color = doodad.color;
+                    obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + doodad.height/2, y - width/2 + .5f);
                     obj.transform.parent = transform;
                     doodads.Add (obj);
                 }
