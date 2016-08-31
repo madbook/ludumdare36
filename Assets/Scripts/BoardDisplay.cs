@@ -65,6 +65,7 @@ public class BoardDisplay : MonoBehaviour {
 
     public Transform waterCube;
     public Material cloudMaterial;
+    public bool renderClouds = true;
 
     List<GameObject> doodads = new List<GameObject> ();
 
@@ -99,7 +100,6 @@ public class BoardDisplay : MonoBehaviour {
 
         if (displayMode == DisplayMode.Mesh) {
             DrawMesh (heightMap, colorMap, hdColorMap);
-            DrawClouds (board, heightMap);
         } else if (displayMode == DisplayMode.Cube) {
             DrawBoardCubes (heightMap, colorMap);
         } else if (displayMode == DisplayMode.MeshWithBillboards) {
@@ -108,6 +108,9 @@ public class BoardDisplay : MonoBehaviour {
         } else if (displayMode == DisplayMode.MeshWithDoodads) {
             DrawMesh (heightMap, colorMap, hdColorMap);
             DrawDoodads (heightMap, biomeMap);
+        }
+
+        if (renderClouds) {
             DrawClouds (board, heightMap);
         }
 
