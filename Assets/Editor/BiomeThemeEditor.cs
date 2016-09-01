@@ -12,7 +12,7 @@ public class BiomeThemeEditor : Editor {
 		BiomeTheme theme = (BiomeTheme)target;
 
 		if (DrawDefaultInspector()) {
-			if (display != null && display.autoUpdate) {
+			if (display != null && display.drawOnEditorUpdate) {
                 theme.ResetDoodads ();
 				display.DrawBoard ();
 			}

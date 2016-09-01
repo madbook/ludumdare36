@@ -7,7 +7,7 @@ public class BoardDisplayEditor : Editor {
 		BoardDisplay display = (BoardDisplay)target;
 
 		if (DrawDefaultInspector()) {
-			if (display.autoUpdate) {
+			if (display.drawOnEditorUpdate) {
 				display.DrawBoard ();
 			}
 		}

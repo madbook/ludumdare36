@@ -2,45 +2,40 @@
 using System.Collections.Generic;
 
 public class BoardDisplay : MonoBehaviour {
-    public enum DisplayMode {Mesh, Cube, MeshWithDoodads};
-    public DisplayMode displayMode;
-    public Transform mainCamera;
-    public bool hdColorMap;
+    // Rendering options
+    public bool drawHDTexture = true;
+    public bool drawTerrainAsCubes = false;
+    public bool drawBiomeDoodads = true;
+    public bool drawBiomeClouds = true;
+    public bool drawOnEditorUpdate = true;
 
     public BiomeTheme biomeColorTheme;
-
-    Dictionary<AltitudeBiome,int> altitudeBiomeIndices = new Dictionary<AltitudeBiome,int> ();
-
-    // TODO - Can simplify the logic that that selects the biome by creating a dictionary
-    // that ties biomes to colors, but I don't think that works with the "Any" types.  Will
-    // need to enumrate all the biome combinations for that to work (I think);
+    public MeshFilter bottomMeshFilter;
+    public Transform waterCube;
+    public Material cloudMaterial;
 
     // Snap altitude rendering to n discrete levels
     const int quantizationLevels = 5;
     const int verticalScale = 4;
-
     // Because the current value of altitude is in the range of 0-100; 
     const float MAX_ALTITUDE = 100;
+    // Adjust the water level to prevent z-fighting when water and altitude are both 0.
+    const float waterLevelOffset = .1f;
 
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
-    public MeshFilter bottomMeshFilter;
     MeshCollider meshCollider;
 
-    public Transform waterCube;
-    public Material cloudMaterial;
-    public bool renderClouds = true;
-
-    // These enable automatic redraw when changing values in the editor;
-    public bool autoUpdate = true;
-    BoardNode[,] lastBoard;
-
     List<GameObject> doodads = new List<GameObject> ();
+    // This is used in the calculation of water levels, though it can probably be simplified.
+    Dictionary<AltitudeBiome,int> altitudeBiomeIndices = new Dictionary<AltitudeBiome,int> ();
+    // This is necessary to enable autoUpdate.
+    BoardNode[,] lastBoard;
 
     void Start () {
         meshFilter = GetComponent<MeshFilter> ();
         meshRenderer = GetComponent<MeshRenderer> ();
-        meshFilter.gameObject.AddComponent<MeshCollider>();
+        meshCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
 
         altitudeBiomeIndices.Add(AltitudeBiome.Valley, 0);
         altitudeBiomeIndices.Add(AltitudeBiome.Plain, 1);
@@ -66,38 +61,38 @@ public class BoardDisplay : MonoBehaviour {
         int height = board.GetLength (1);
         float[,] heightMap = GenerateHeightMap (board);
         Biome[,] biomeMap = BiomeGenerator.GenerateBiomeData (board);
-        Color[] colorMap = GenerateBiomeColorMap (board, heightMap, biomeMap, hdColorMap);
+        Color[] colorMap = GenerateBiomeColorMap (board, heightMap, biomeMap);
 
-        if (displayMode == DisplayMode.Mesh) {
-            DrawMesh (heightMap, colorMap, hdColorMap);
-        } else if (displayMode == DisplayMode.Cube) {
+        if (drawTerrainAsCubes) {
+            meshFilter.mesh = null;
+            bottomMeshFilter.mesh = null;
             DrawBoardCubes (heightMap, colorMap);
-        } else if (displayMode == DisplayMode.MeshWithDoodads) {
-            DrawMesh (heightMap, colorMap, hdColorMap);
-            DrawDoodads (heightMap, biomeMap);
+        } else {
+            DrawBoardMesh (heightMap, colorMap);
         }
 
-        if (renderClouds) {
-            DrawClouds (board, heightMap);
+        if (drawBiomeDoodads) {
+            DrawBiomeDoodads (heightMap, biomeMap);
+        }
+
+        if (drawBiomeClouds) {
+            DrawBiomeClouds (board, heightMap);
         }
 
         if (waterCube != null) {
-            // Adjust the water level.  The offset is to prevent z-fighting when water and altitude are both 0.
-            float waterLevelOffset = .1f;
-            float waterLevel = GetWaterLevel (board, heightMap);
+            float waterLevel = GetWaterLevel (board);
             waterCube.transform.localScale = new Vector3 (width + 1, waterLevel, height + 1);
             waterCube.transform.localPosition = new Vector3 (0, waterLevel/2 - waterLevelOffset, 0);
         }
     }
 
-    float GetWaterLevel (BoardNode[,] board, float[,] heightMap) {
+    float GetWaterLevel (BoardNode[,] board) {
         int width = board.GetLength (0);
         int height = board.GetLength (1);
         int waterLevels = 4;
         float totalWater = 0;
         float waterLevel = 0f;
         int[] numberOfTilesPerLevel = new int[waterLevels];
-
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -147,11 +142,11 @@ public class BoardDisplay : MonoBehaviour {
         return heightMap;
     }
 
-    Color[] GenerateBiomeColorMap (BoardNode[,] board, float[,] heightMap, Biome[,] biomeMap, bool hdColorMap) {
+    Color[] GenerateBiomeColorMap (BoardNode[,] board, float[,] heightMap, Biome[,] biomeMap) {
         int width = board.GetLength (0);
         int height = board.GetLength (1);
 
-        int colorMapLength = (hdColorMap) ? width*height*4 : width*height;
+        int colorMapLength = (drawHDTexture) ? width*height*4 : width*height;
         Color[] colorMap = new Color[colorMapLength];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -163,7 +158,7 @@ public class BoardDisplay : MonoBehaviour {
                 // Original thought was to have this be on a biome-basis, e.g. to only apply it to "fluid" biomes.
                 // Each tile has a 2x2 pixel texture. If any quadrant of that texture has a neighboring tile with a
                 // greater altitude, that tile's texture is blended into that pixel.
-                if (hdColorMap) {
+                if (drawHDTexture) {
                     Color colorA = baseColor;
                     Color colorB = baseColor;
                     Color colorC = baseColor;
@@ -199,9 +194,7 @@ public class BoardDisplay : MonoBehaviour {
                     colorMap[x*2 + width*y*4 + 2*width] = Color.Lerp (colorC, altitudeColor, .33f);
                     colorMap[x*2 + width*y*4 + 2*width + 1] = Color.Lerp (colorD, altitudeColor, .33f);
                 } else {
-                    Color finalColor = Color.Lerp (baseColor, altitudeColor, .33f);
-                    // Debug.Log ("assigning for (" + x + "," + y + ")");
-                    colorMap[x + width*y] = finalColor;
+                    colorMap[x + width*y] = Color.Lerp (baseColor, altitudeColor, .33f);
                 }
             }
         }
@@ -213,14 +206,14 @@ public class BoardDisplay : MonoBehaviour {
         return biomeColorTheme.GetColor (biome);
     }
 
-    public void DrawMesh (float[,] heightMap, Color[] colorMap, bool hdColorMap) {
+    public void DrawBoardMesh (float[,] heightMap, Color[] colorMap) {
         int width = heightMap.GetLength (0);
         int height = heightMap.GetLength (1);
 
         MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
-        int textureMultiplier = (hdColorMap) ? 2 : 1;
+        int textureMultiplier = (drawHDTexture) ? 2 : 1;
         Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width * textureMultiplier, height * textureMultiplier);
         meshRenderer.material.mainTexture = texture;
 
@@ -228,8 +221,8 @@ public class BoardDisplay : MonoBehaviour {
         bottomMeshFilter.sharedMesh = bottomMeshData.GenerateMesh ();
 
         //boop the collider into updating
-        GetComponent<MeshCollider>().sharedMesh = null;
-        GetComponent<MeshCollider>().sharedMesh = meshFilter.mesh;
+        meshCollider.sharedMesh = null;
+        meshCollider.sharedMesh = meshFilter.mesh;
     }
 
     public void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {
@@ -249,7 +242,7 @@ public class BoardDisplay : MonoBehaviour {
         }
     }
 
-    public void DrawClouds (BoardNode[,] board, float[,] heightMap) {
+    public void DrawBiomeClouds (BoardNode[,] board, float[,] heightMap) {
         int width = board.GetLength (0);
         int height = board.GetLength (1);
 
@@ -285,16 +278,14 @@ public class BoardDisplay : MonoBehaviour {
         }
     }
 
-    public void DrawDoodads (float[,] heightMap, Biome[,] biomeMap) {
+    public void DrawBiomeDoodads (float[,] heightMap, Biome[,] biomeMap) {
         int width = heightMap.GetLength (0);
         int height = heightMap.GetLength (1);
-
-        // Material material = GetComponent<MeshRenderer> ().material;
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 Biome biome = biomeMap[x,y];
-                BiomeTheme.Doodad doodad =biomeColorTheme.GetDoodad (biome);
+                BiomeTheme.Doodad doodad = biomeColorTheme.GetDoodad (biome);
 
                 if (doodad != null) {
                     GameObject obj = new GameObject ("Biome Doodad");
