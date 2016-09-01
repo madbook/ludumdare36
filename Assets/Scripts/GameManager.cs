@@ -180,8 +180,8 @@ public class GameManager : MonoBehaviour
                 float x = hit.point.x;
                 float z = hit.point.z;
 
-                int row = (int)(x + width / 2 - .5);
-                int col = (int)(z + height / 2 - .5);
+                int row = Mathf.Clamp ((int)(x + width / 2), 0, width - 1);
+                int col = Mathf.Clamp ((int)(z + height / 2), 0, height - 1);
                 Debug.Log("row: " + row + " col: " + col);
 
                 BoardNode node = board[row, col];
