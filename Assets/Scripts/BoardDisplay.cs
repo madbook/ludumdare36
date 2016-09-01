@@ -40,7 +40,7 @@ public class BoardDisplay : MonoBehaviour {
     void Start () {
         meshFilter = GetComponent<MeshFilter> ();
         meshRenderer = GetComponent<MeshRenderer> ();
-        MeshCollider meshCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
+        meshFilter.gameObject.AddComponent<MeshCollider>();
 
         altitudeBiomeIndices.Add(AltitudeBiome.Valley, 0);
         altitudeBiomeIndices.Add(AltitudeBiome.Plain, 1);
@@ -177,7 +177,6 @@ public class BoardDisplay : MonoBehaviour {
                 Biome biome = biomeMap[x,y];
                 Color baseColor = ColorFromBiome (biome);
                 Color altitudeColor = Color.Lerp (Color.black, Color.white, node.altitude / MAX_ALTITUDE);
-                float altitude = heightMap[x,y];
 
                 // Original thought was to have this be on a biome-basis, e.g. to only apply it to "fluid" biomes.
                 // Each tile has a 2x2 pixel texture. If any quadrant of that texture has a neighboring tile with a
@@ -242,7 +241,6 @@ public class BoardDisplay : MonoBehaviour {
         int height = heightMap.GetLength (1);
 
         MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
-        Mesh mesh = meshData.GenerateMesh ();
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
         int textureMultiplier = (hdColorMap) ? 2 : 1;
