@@ -7,7 +7,7 @@ public class BoardDisplay : MonoBehaviour {
     public DisplayMode displayMode;
     public enum ColorMode {Biome, Debug};
     public ColorMode colorMode;
-    public Transform camera;
+    public Transform mainCamera;
     public bool hdColorMap;
 
     public BiomeTheme biomeColorTheme;
@@ -149,13 +149,9 @@ public class BoardDisplay : MonoBehaviour {
             for (int y = 0; y < height; y++) {
                 BoardNode node = board[x,y];
                 float altitude = node.altitude / MAX_ALTITUDE;
-                if (quantizationLevels > 1) {
-                    altitude *= quantizationLevels - 1;
-                    altitude = Mathf.Round(altitude);
-                    altitude /= quantizationLevels - 1;
-                } else if (quantizationLevels == 1) {
-                    altitude = 0f;
-                }
+                altitude *= quantizationLevels - 1;
+                altitude = Mathf.Round(altitude);
+                altitude /= quantizationLevels - 1;
                 heightMap[x,y] = altitude * verticalScale;
             }
         }
@@ -334,7 +330,7 @@ public class BoardDisplay : MonoBehaviour {
                     // GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Cube);
                     GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Quad);
                     obj.AddComponent<Billboard> ();
-                    obj.GetComponent<Billboard> ().camera = camera;
+                    obj.GetComponent<Billboard> ().cameraToLookAt = mainCamera;
                     // Some of this won't be necessary, since we can set up textures properly.
                     MeshRenderer meshRenderer = obj.GetComponent<MeshRenderer> ();
                     meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

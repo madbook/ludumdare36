@@ -2,9 +2,9 @@
 using System.Collections;
 
 public class Billboard : MonoBehaviour {
-    public Transform camera;
+    public Transform cameraToLookAt;
 
     void Update () {
-        transform.forward = camera.forward;
+        transform.forward = cameraToLookAt.forward;
     }
 }
