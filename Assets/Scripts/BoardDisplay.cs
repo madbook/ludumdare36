@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class BoardDisplay : MonoBehaviour {
     // Rendering options
@@ -8,6 +9,7 @@ public class BoardDisplay : MonoBehaviour {
     public bool drawBiomeDoodads = true;
     public bool drawBiomeClouds = true;
     public bool drawOnEditorUpdate = true;
+    public bool drawPartialUpdates = true;
 
     public BiomeTheme biomeColorTheme;
     public MeshFilter bottomMeshFilter;
@@ -31,6 +33,7 @@ public class BoardDisplay : MonoBehaviour {
     Dictionary<AltitudeBiome,int> altitudeBiomeIndices = new Dictionary<AltitudeBiome,int> ();
     // This is necessary to enable autoUpdate.
     BoardNode[,] lastBoard;
+    BoardNode[,] lastBoardCopy;
 
     void Start () {
         meshFilter = GetComponent<MeshFilter> ();
@@ -45,44 +48,144 @@ public class BoardDisplay : MonoBehaviour {
 
     public void DrawBoard () {
         if (lastBoard != null) {
-            DrawBoard (lastBoard);
+            DrawBoard (lastBoard, true);
         }
     }
 
-    public void DrawBoard (BoardNode[,] board) {
-        lastBoard = board;
+    struct BoardDiffState {
+        public readonly bool hasNodeChange;
+        public readonly bool hasHeightChange;
+        public readonly bool hasBiomeChange;
 
-        foreach (GameObject obj in doodads) {
-            Destroy (obj);
+        public BoardDiffState (bool hasNodeChange, bool hasHeightChange, bool hasBiomeChange) {
+            this.hasNodeChange = hasNodeChange;
+            this.hasHeightChange = hasHeightChange;
+            this.hasBiomeChange = hasBiomeChange;
         }
-        doodads.Clear ();
 
+        public static BoardDiffState Compare (BoardNode[,] boardA, BoardNode[,] boardB) {
+            int width = boardA.GetLength (0);
+            int height = boardA.GetLength (1);
+            bool heightChange = false;
+            bool biomeChange = false;
+            bool nodeChange = false;
+
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    if (boardA[x,y] == boardB[x,y]) {
+                        continue;
+                    }
+
+                    nodeChange = true;
+
+                    if (heightChange == false) {
+                        if (boardA[x,y].altitude != boardB[x,y].altitude) {
+                            heightChange = true;
+                        }
+                    }
+
+                    if (biomeChange == false) {
+                        Biome biomeA = BiomeGenerator.GetBiome (boardA[x,y]);
+                        Biome biomeB = BiomeGenerator.GetBiome (boardB[x,y]);
+
+                        if (biomeA != biomeB) {
+                            biomeChange = true;
+                        }
+                    }
+
+                    if (nodeChange && heightChange && biomeChange) {
+                        return new BoardDiffState(nodeChange, heightChange, biomeChange);
+                    }
+                }
+            }
+
+            return new BoardDiffState (nodeChange, heightChange, biomeChange);
+        }
+    }
+
+    public void DrawBoard (BoardNode[,] board, bool forceRedraw = false) {
         int width = board.GetLength (0);
         int height = board.GetLength (1);
+
+        bool redrawMesh = false;
+        bool redrawTexture = false;
+        bool redrawDoodads = false;
+        bool redrawWater = false;
+
+        if (lastBoardCopy == null || forceRedraw || !drawPartialUpdates) {
+            redrawMesh = true;
+            redrawTexture = true;
+            redrawDoodads = true;
+            redrawWater = true;
+        } else if (lastBoard != null) {
+            BoardDiffState diff = BoardDiffState.Compare (board, lastBoardCopy);
+
+            if (!diff.hasNodeChange) {
+                return;
+            }
+
+            redrawDoodads = true;
+            redrawWater = true;
+
+            if (diff.hasHeightChange) {
+                redrawMesh = true;
+            }
+            if (diff.hasBiomeChange) {
+                redrawTexture = true;
+            }
+        }
+
+        lastBoard = board;
+        if (lastBoardCopy == null) {
+            lastBoard = new BoardNode[width, height];
+        }
+        if (drawPartialUpdates) {
+            Array.Copy (board, lastBoardCopy, width * height);
+        }
+
         float[,] heightMap = GenerateHeightMap (board);
         Biome[,] biomeMap = BiomeGenerator.GenerateBiomeData (board);
         Color[] colorMap = GenerateBiomeColorMap (board, heightMap, biomeMap);
 
-        if (drawTerrainAsCubes) {
-            meshFilter.mesh = null;
-            bottomMeshFilter.mesh = null;
-            DrawBoardCubes (heightMap, colorMap);
-        } else {
-            DrawBoardMesh (heightMap, colorMap);
+        if (redrawMesh) {
+            // The cubes rendered in DrawBoardCubes are added to the doodads list, so that call
+            // needs to happen after that list has been cleared.
+            if (!drawTerrainAsCubes) {
+                DrawBoardMesh (heightMap, colorMap);
+            }
         }
 
-        if (drawBiomeDoodads) {
-            DrawBiomeDoodads (heightMap, biomeMap);
+        if (redrawTexture) {
+            DrawBoardTexture (board, colorMap);
         }
 
-        if (drawBiomeClouds) {
-            DrawBiomeClouds (board, heightMap);
+        if (redrawDoodads) {
+            foreach (GameObject obj in doodads) {
+                Destroy (obj);
+            }
+            doodads.Clear ();
+
+            if (drawTerrainAsCubes) {
+                meshFilter.mesh = null;
+                bottomMeshFilter.mesh = null;
+                DrawBoardCubes (heightMap, colorMap);
+            } else
+
+            if (drawBiomeDoodads) {
+                DrawBiomeDoodads (heightMap, biomeMap);
+            }
+
+            if (drawBiomeClouds) {
+                DrawBiomeClouds (board, heightMap);
+            }
         }
 
-        if (waterCube != null) {
-            float waterLevel = GetWaterLevel (board);
-            waterCube.transform.localScale = new Vector3 (width + 1, waterLevel, height + 1);
-            waterCube.transform.localPosition = new Vector3 (0, waterLevel/2 - waterLevelOffset, 0);
+        if (redrawWater) {
+            if (waterCube != null) {
+                float waterLevel = GetWaterLevel (board);
+                waterCube.transform.localScale = new Vector3 (width + 1, waterLevel, height + 1);
+                waterCube.transform.localPosition = new Vector3 (0, waterLevel/2 - waterLevelOffset, 0);
+            }
         }
     }
 
@@ -213,16 +316,25 @@ public class BoardDisplay : MonoBehaviour {
         MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
-        int textureMultiplier = (drawHDTexture) ? 2 : 1;
-        Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width * textureMultiplier, height * textureMultiplier);
-        meshRenderer.material.mainTexture = texture;
-
         MeshData bottomMeshData = MeshGenerator.GenerateBottomMeshData (heightMap);
         bottomMeshFilter.sharedMesh = bottomMeshData.GenerateMesh ();
 
         //boop the collider into updating
         meshCollider.sharedMesh = null;
         meshCollider.sharedMesh = meshFilter.mesh;
+    }
+
+    public void DrawBoardTexture (BoardNode[,] board, Color[] colorMap) {
+        if (meshFilter.sharedMesh == null) {
+            return;
+        }
+
+        int width = board.GetLength (0);
+        int height = board.GetLength (1);
+        int textureMultiplier = (drawHDTexture) ? 2 : 1;
+
+        Texture2D texture = TextureGenerator.GenerateTexture (colorMap, width * textureMultiplier, height * textureMultiplier);
+        meshRenderer.material.mainTexture = texture;
     }
 
     public void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {

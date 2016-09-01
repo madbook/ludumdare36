@@ -56,4 +56,31 @@ public struct BoardNode {
 		this.temperature = temperature;
         this.wind = wind;
 	}
+
+    public static bool operator == (BoardNode a, BoardNode b) {
+        // Ignores wind for the time being.
+        return (
+            a.altitude == b.altitude &&
+            a.moisture == b.moisture &&
+            a.temperature == b.temperature
+        );
+    }
+
+    public static bool operator != (BoardNode a, BoardNode b) {
+        return !(a == b);
+    }
+
+    public override bool Equals (object other) {
+        try {
+            return (bool)(this == (BoardNode)other);
+        }
+        catch {
+            return false;
+        }
+    }
+
+    // Added to stop VSCode from complaining at me.  Shouldn't need to hash these anyways.
+    public override int GetHashCode () {
+        return 0;
+    }
 }
