@@ -135,6 +135,10 @@ public class GameManager : MonoBehaviour
     
     void Update()
     {
+        if (board == null) {
+            return;
+        }
+
         int width = board.GetLength(0);
         int height = board.GetLength(1);
 
