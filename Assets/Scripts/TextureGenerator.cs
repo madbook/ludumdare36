@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 public static class TextureGenerator {
     public static Texture2D GenerateTexture (Color[] colorMap, int width, int height) {

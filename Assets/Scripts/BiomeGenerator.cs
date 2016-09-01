@@ -1,6 +1,3 @@
-using UnityEngine;
-using System.Collections;
-
 public static class BiomeGenerator {
     const float BOARD_NODE_SCALE = 100;
 
