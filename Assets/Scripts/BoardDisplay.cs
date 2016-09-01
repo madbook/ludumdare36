@@ -227,11 +227,6 @@ public class BoardDisplay : MonoBehaviour {
         return colorMap;
     }
 
-    public bool IsBiomeFlat (Biome biome) {
-        return true;
-        // return biome == deepWaterBiome || biome == shallowWaterBiome || biome == swampBiome;
-    }
-
     public Color ColorFromBiome (Biome biome) {
         return biomeColorTheme.GetColor (biome);
     }
