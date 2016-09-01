@@ -4,8 +4,6 @@ using System.Collections.Generic;
 public class BoardDisplay : MonoBehaviour {
     public enum DisplayMode {Mesh, Cube, MeshWithBillboards, MeshWithDoodads};
     public DisplayMode displayMode;
-    public enum ColorMode {Biome, Debug};
-    public ColorMode colorMode;
     public Transform mainCamera;
     public bool hdColorMap;
 
@@ -67,14 +65,8 @@ public class BoardDisplay : MonoBehaviour {
         int width = board.GetLength (0);
         int height = board.GetLength (1);
         float[,] heightMap = GenerateHeightMap (board);
-        Color[] colorMap;
         Biome[,] biomeMap = BiomeGenerator.GenerateBiomeData (board);
-
-        if (colorMode == ColorMode.Biome) {
-            colorMap = GenerateBiomeColorMap (board, heightMap, biomeMap, hdColorMap);
-        } else {
-            colorMap = GenerateDebugColorMap (board);
-        }
+        Color[] colorMap = GenerateDebugColorMap (board);
 
         if (displayMode == DisplayMode.Mesh) {
             DrawMesh (heightMap, colorMap, hdColorMap);
