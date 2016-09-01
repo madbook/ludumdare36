@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public static class BoardGenerator {
     private const float ALTITUDE_Y_OFFSET = 2234;

@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 public static class MeshGenerator {
     public static MeshData GenerateMeshData (float[,] heightMap) { 
