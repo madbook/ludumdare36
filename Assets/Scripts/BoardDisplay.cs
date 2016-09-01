@@ -66,7 +66,7 @@ public class BoardDisplay : MonoBehaviour {
         int height = board.GetLength (1);
         float[,] heightMap = GenerateHeightMap (board);
         Biome[,] biomeMap = BiomeGenerator.GenerateBiomeData (board);
-        Color[] colorMap = GenerateDebugColorMap (board);
+        Color[] colorMap = GenerateBiomeColorMap (board, heightMap, biomeMap, hdColorMap);
 
         if (displayMode == DisplayMode.Mesh) {
             DrawMesh (heightMap, colorMap, hdColorMap);
@@ -148,21 +148,6 @@ public class BoardDisplay : MonoBehaviour {
         }
 
         return heightMap;
-    }
-
-    Color[] GenerateDebugColorMap (BoardNode[,] board) {
-        int width = board.GetLength (0);
-        int height = board.GetLength (1);
-
-        Color[] colorMap = new Color[width*height];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                BoardNode node = board[x,y];
-                colorMap[x + width*y] = new Color ((float)(node.temperature)/50f -.5f, 0, (float)(node.moisture) / 50f - .5f);
-            }
-        }
-
-        return colorMap;
     }
 
     Color[] GenerateBiomeColorMap (BoardNode[,] board, float[,] heightMap, Biome[,] biomeMap, bool hdColorMap) {
