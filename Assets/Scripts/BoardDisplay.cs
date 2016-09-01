@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class BoardDisplay : MonoBehaviour {
-    public enum DisplayMode {Mesh, Cube, MeshWithBillboards, MeshWithDoodads};
+    public enum DisplayMode {Mesh, Cube, MeshWithDoodads};
     public DisplayMode displayMode;
     public Transform mainCamera;
     public bool hdColorMap;
@@ -72,9 +72,6 @@ public class BoardDisplay : MonoBehaviour {
             DrawMesh (heightMap, colorMap, hdColorMap);
         } else if (displayMode == DisplayMode.Cube) {
             DrawBoardCubes (heightMap, colorMap);
-        } else if (displayMode == DisplayMode.MeshWithBillboards) {
-            DrawMesh (heightMap, colorMap, hdColorMap);
-            DrawBillboards (board, heightMap);
         } else if (displayMode == DisplayMode.MeshWithDoodads) {
             DrawMesh (heightMap, colorMap, hdColorMap);
             DrawDoodads (heightMap, biomeMap);
@@ -284,33 +281,6 @@ public class BoardDisplay : MonoBehaviour {
                 obj.transform.parent = transform;
                 obj.GetComponent<MeshRenderer> ().sharedMaterial = cloudMaterial;
                 doodads.Add (obj);
-            }
-        }
-    }
-
-    public void DrawBillboards (BoardNode[,] board, float[,] heightMap) {
-        int width = heightMap.GetLength (0);
-        int height = heightMap.GetLength (1);
-
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                BoardNode node = board[x,y];
-                if (node.temperature > 50 && node.moisture > 50) {
-                    // GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Cube);
-                    GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Quad);
-                    obj.AddComponent<Billboard> ();
-                    obj.GetComponent<Billboard> ().cameraToLookAt = mainCamera;
-                    // Some of this won't be necessary, since we can set up textures properly.
-                    MeshRenderer meshRenderer = obj.GetComponent<MeshRenderer> ();
-                    meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    meshRenderer.receiveShadows = false;
-
-                    obj.transform.localScale = new Vector3 (0.25f, 0.5f, 0.25f);
-                    obj.transform.localPosition = new Vector3 (x - width/2 + .5f, heightMap[x,y] + .25f, y - width/2 + .5f);
-                    obj.transform.parent = transform;
-                    obj.GetComponent<Renderer>().material.color = Color.Lerp (Color.black, Color.red, .66f);
-                    doodads.Add (obj);
-                }
             }
         }
     }
