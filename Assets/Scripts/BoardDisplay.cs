@@ -310,9 +310,6 @@ public class BoardDisplay : MonoBehaviour {
     }
 
     public void DrawBoardMesh (float[,] heightMap, Color[] colorMap) {
-        int width = heightMap.GetLength (0);
-        int height = heightMap.GetLength (1);
-
         MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
