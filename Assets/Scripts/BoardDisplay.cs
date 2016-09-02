@@ -23,6 +23,8 @@ public class BoardDisplay : MonoBehaviour {
     const float MAX_ALTITUDE = 100;
     // Adjust the water level to prevent z-fighting when water and altitude are both 0.
     const float waterLevelOffset = .1f;
+    // Extra border of vertices to render around top mesh.
+    const int borderSize = 1;
 
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
@@ -183,7 +185,7 @@ public class BoardDisplay : MonoBehaviour {
         if (redrawWater) {
             if (waterCube != null) {
                 float waterLevel = GetWaterLevel (board);
-                waterCube.transform.localScale = new Vector3 (width + 1, waterLevel, height + 1);
+                waterCube.transform.localScale = new Vector3 (width - 1 + 2*borderSize, waterLevel, height - 1 + 2*borderSize);
                 waterCube.transform.localPosition = new Vector3 (0, waterLevel/2 - waterLevelOffset, 0);
             }
         }
@@ -310,10 +312,10 @@ public class BoardDisplay : MonoBehaviour {
     }
 
     public void DrawBoardMesh (float[,] heightMap, Color[] colorMap) {
-        MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
+        MeshData meshData = MeshGenerator.GenerateMeshData (heightMap, borderSize);
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
-        MeshData bottomMeshData = MeshGenerator.GenerateBottomMeshData (heightMap);
+        MeshData bottomMeshData = MeshGenerator.GenerateBottomMeshData (heightMap, borderSize);
         bottomMeshFilter.sharedMesh = bottomMeshData.GenerateMesh ();
 
         //boop the collider into updating

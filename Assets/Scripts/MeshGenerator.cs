@@ -1,11 +1,11 @@
 using UnityEngine;
 
 public static class MeshGenerator {
-    public static MeshData GenerateMeshData (float[,] heightMap) { 
+    public static MeshData GenerateMeshData (float[,] heightMap, int borderSize) {
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
-        int borderedWidth = width + 2;
-        int borderedHeight = width + 2;
+        int borderedWidth = width + 2*borderSize;
+        int borderedHeight = width + 2*borderSize;
 
         MeshData meshData = MeshData.CreateGridMesh (borderedWidth, borderedHeight);
 
@@ -14,8 +14,8 @@ public static class MeshGenerator {
 
         for (int bX = 0; bX < borderedWidth; bX++) {
             for (int bY = 0; bY < borderedHeight; bY++) {
-                int x = Mathf.Clamp (bX - 1, 0, width - 1);
-                int y = Mathf.Clamp (bY - 1, 0, height - 1);
+                int x = Mathf.Clamp (bX - borderSize, 0, width - 1);
+                int y = Mathf.Clamp (bY - borderSize, 0, height - 1);
 
                 Vector3 position = new Vector3 (bX - borderedWidth/2 + .5f, heightMap[x, y], bY - borderedHeight/2 + .5f);
                 Vector2 uv = new Vector2 ((bX-1)/(float)width + uvOffsetX, (bY-1)/(float)height + uvOffsetY);
@@ -38,11 +38,11 @@ public static class MeshGenerator {
         return meshData;
     }
 
-    public static MeshData GenerateBottomMeshData (float[,] heightMap) {
+    public static MeshData GenerateBottomMeshData (float[,] heightMap, int borderSize) {
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
-        int borderedWidth = width + 2;
-        int borderedHeight = height + 2;
+        int borderedWidth = width + 2*borderSize;
+        int borderedHeight = height + 2*borderSize;
         int numBorderVerticies = 2 * (borderedWidth + borderedHeight - 2);
         int numVerticies = numBorderVerticies + 2*borderedWidth + 2*borderedHeight + 1;
         int numTriangles = numBorderVerticies * 3 + 8;
@@ -60,8 +60,8 @@ public static class MeshGenerator {
                 if (edgeCount > 1) {
                     vertexIndicies[bX+1,bY+1] = -1;
                 } else if (bX <= 0 || bY <= 0 || bX >= borderedWidth - 1 || bY >= borderedHeight - 1) {
-                    int x = Mathf.Clamp (bX-1, 0, width-1);
-                    int y = Mathf.Clamp (bY-1, 0, width-1);
+                    int x = Mathf.Clamp (bX-borderSize, 0, width-1);
+                    int y = Mathf.Clamp (bY-borderSize, 0, height-1);
                     float altitude = heightMap[x, y];
                     if (edgeCount > 0) {
                         altitude = -1;
