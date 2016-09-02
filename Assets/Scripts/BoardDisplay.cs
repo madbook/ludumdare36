@@ -137,7 +137,7 @@ public class BoardDisplay : MonoBehaviour {
 
         lastBoard = board;
         if (lastBoardCopy == null) {
-            lastBoard = new BoardNode[width, height];
+            lastBoardCopy = new BoardNode[width, height];
         }
         if (drawPartialUpdates) {
             Array.Copy (board, lastBoardCopy, width * height);
