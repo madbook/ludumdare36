@@ -167,23 +167,22 @@ public class GameManager : MonoBehaviour
             RefreshActionText ();
         }
 
-        if (isPaintEnabled && Input.GetMouseButton(0))
-        {
-            // Debug.Log("click");
+        Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
+        RaycastHit hit;
+        int mask =  1 << LayerMask.NameToLayer("Terrain");
+        bool isCollision = Physics.Raycast(ray, out hit, 100, mask);
 
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, 100, LayerMask.NameToLayer("Terrain")))
-            {
-                Debug.Log(hit.point);
+        if (isCollision) {
+            float x = hit.point.x;
+            float z = hit.point.z;
+            int row = Mathf.Clamp ((int)(x + width / 2), 0, width - 1);
+            int col = Mathf.Clamp ((int)(z + height / 2), 0, height - 1);
 
-                float x = hit.point.x;
-                float z = hit.point.z;
+            if (display != null) {
+                display.SetCursorPosition (board, row, col);
+            }
 
-                int row = Mathf.Clamp ((int)(x + width / 2), 0, width - 1);
-                int col = Mathf.Clamp ((int)(z + height / 2), 0, height - 1);
-                Debug.Log("row: " + row + " col: " + col);
-
+            if (isPaintEnabled && Input.GetMouseButton (0)) {
                 BoardNode node = board[row, col];
                 if (currentAction == Action.Wet) {
                     node.moisture = Mathf.Clamp (node.moisture + brushMagnitude, 0, 100);
@@ -207,10 +206,14 @@ public class GameManager : MonoBehaviour
                 if (display != null) {
                     display.DrawBoard(board);
                 }
-            }
 
-            StartCoroutine (TemporarilyDisablePaint (paintInterval));
-        }    
+                StartCoroutine (TemporarilyDisablePaint (paintInterval));
+            }
+        } else {
+            if (display != null) {
+                display.HideCursor ();
+            }
+        }
     }
 
     IEnumerator TemporarilyDisablePaint (float interval) {

@@ -23,10 +23,15 @@ public class BoardDisplay : MonoBehaviour {
     const float MAX_ALTITUDE = 100;
     // Adjust the water level to prevent z-fighting when water and altitude are both 0.
     const float waterLevelOffset = .1f;
+    // Extra border of vertices to render around top mesh.
+    const int borderSize = 1;
+
+    bool cursorVisible;
 
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
     MeshCollider meshCollider;
+    Transform cursorCube;
 
     List<GameObject> doodads = new List<GameObject> ();
     // This is used in the calculation of water levels, though it can probably be simplified.
@@ -40,10 +45,29 @@ public class BoardDisplay : MonoBehaviour {
         meshRenderer = GetComponent<MeshRenderer> ();
         meshCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
 
+        GameObject obj = GameObject.CreatePrimitive (PrimitiveType.Cube);
+        obj.GetComponent<MeshRenderer> ().material = cloudMaterial;
+        cursorCube = obj.transform;
+        cursorCube.position = new Vector3 (0, 5, 0);
+        cursorCube.localScale = new Vector3 (1, 10, 1);
+
         altitudeBiomeIndices.Add(AltitudeBiome.Valley, 0);
         altitudeBiomeIndices.Add(AltitudeBiome.Plain, 1);
         altitudeBiomeIndices.Add(AltitudeBiome.Hill, 2);
         altitudeBiomeIndices.Add(AltitudeBiome.Mountain, 3);
+    }
+
+    public void SetCursorPosition (BoardNode[,] board, int x, int y) {
+        if (!cursorVisible) {
+            cursorCube.gameObject.SetActive (true);
+        }
+        int width = board.GetLength (0);
+        int height = board.GetLength (1);
+        cursorCube.transform.position = new Vector3 (x - width/2 + .5f, cursorCube.transform.position.y, y - width/2 + .5f);
+    }
+
+    public void HideCursor () {
+        cursorCube.gameObject.SetActive (false);
     }
 
     public void DrawBoard () {
@@ -183,7 +207,7 @@ public class BoardDisplay : MonoBehaviour {
         if (redrawWater) {
             if (waterCube != null) {
                 float waterLevel = GetWaterLevel (board);
-                waterCube.transform.localScale = new Vector3 (width + 1, waterLevel, height + 1);
+                waterCube.transform.localScale = new Vector3 (width - 1 + 2*borderSize, waterLevel, height - 1 + 2*borderSize);
                 waterCube.transform.localPosition = new Vector3 (0, waterLevel/2 - waterLevelOffset, 0);
             }
         }
@@ -310,10 +334,10 @@ public class BoardDisplay : MonoBehaviour {
     }
 
     public void DrawBoardMesh (float[,] heightMap, Color[] colorMap) {
-        MeshData meshData = MeshGenerator.GenerateMeshData (heightMap);
+        MeshData meshData = MeshGenerator.GenerateMeshData (heightMap, borderSize);
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
-        MeshData bottomMeshData = MeshGenerator.GenerateBottomMeshData (heightMap);
+        MeshData bottomMeshData = MeshGenerator.GenerateBottomMeshData (heightMap, borderSize);
         bottomMeshFilter.sharedMesh = bottomMeshData.GenerateMesh ();
 
         //boop the collider into updating
