@@ -32,7 +32,6 @@ public class BoardDisplay : MonoBehaviour {
     MeshRenderer meshRenderer;
     MeshCollider meshCollider;
     Transform cursorCube;
-
     List<GameObject> doodads = new List<GameObject> ();
     // This is used in the calculation of water levels, though it can probably be simplified.
     Dictionary<AltitudeBiome,int> altitudeBiomeIndices = new Dictionary<AltitudeBiome,int> ();
@@ -60,20 +59,16 @@ public class BoardDisplay : MonoBehaviour {
     public void SetCursorPosition (BoardNode[,] board, int x, int y) {
         if (!cursorVisible) {
             cursorCube.gameObject.SetActive (true);
+            cursorVisible = true;
         }
         int width = board.GetLength (0);
         int height = board.GetLength (1);
-        cursorCube.transform.position = new Vector3 (x - width/2 + .5f, cursorCube.transform.position.y, y - width/2 + .5f);
+        cursorCube.transform.position = new Vector3 (x - width/2 + .5f, cursorCube.transform.position.y, y - height/2 + .5f);
     }
 
     public void HideCursor () {
         cursorCube.gameObject.SetActive (false);
-    }
-
-    public void DrawBoard () {
-        if (lastBoard != null) {
-            DrawBoard (lastBoard, true);
-        }
+        cursorVisible = false;
     }
 
     struct BoardDiffState {
@@ -124,6 +119,12 @@ public class BoardDisplay : MonoBehaviour {
             }
 
             return new BoardDiffState (nodeChange, heightChange, biomeChange);
+        }
+    }
+
+    public void DrawBoard () {
+        if (lastBoard != null) {
+            DrawBoard (lastBoard, true);
         }
     }
 
@@ -329,11 +330,11 @@ public class BoardDisplay : MonoBehaviour {
         return colorMap;
     }
 
-    public Color ColorFromBiome (Biome biome) {
+    Color ColorFromBiome (Biome biome) {
         return biomeColorTheme.GetColor (biome);
     }
 
-    public void DrawBoardMesh (float[,] heightMap, Color[] colorMap) {
+    void DrawBoardMesh (float[,] heightMap, Color[] colorMap) {
         MeshData meshData = MeshGenerator.GenerateMeshData (heightMap, borderSize);
         meshFilter.sharedMesh = meshData.GenerateMesh ();
 
@@ -345,7 +346,7 @@ public class BoardDisplay : MonoBehaviour {
         meshCollider.sharedMesh = meshFilter.mesh;
     }
 
-    public void DrawBoardTexture (BoardNode[,] board, Color[] colorMap) {
+    void DrawBoardTexture (BoardNode[,] board, Color[] colorMap) {
         if (meshFilter.sharedMesh == null) {
             return;
         }
@@ -358,7 +359,7 @@ public class BoardDisplay : MonoBehaviour {
         meshRenderer.material.mainTexture = texture;
     }
 
-    public void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {
+    void DrawBoardCubes (float[,] heightMap, Color[] colorMap) {
         int width = heightMap.GetLength (0);
         int height = heightMap.GetLength (1);
 
@@ -375,7 +376,7 @@ public class BoardDisplay : MonoBehaviour {
         }
     }
 
-    public void DrawBiomeClouds (BoardNode[,] board, float[,] heightMap) {
+    void DrawBiomeClouds (BoardNode[,] board, float[,] heightMap) {
         int width = board.GetLength (0);
         int height = board.GetLength (1);
 
@@ -411,7 +412,7 @@ public class BoardDisplay : MonoBehaviour {
         }
     }
 
-    public void DrawBiomeDoodads (float[,] heightMap, Biome[,] biomeMap) {
+    void DrawBiomeDoodads (float[,] heightMap, Biome[,] biomeMap) {
         int width = heightMap.GetLength (0);
         int height = heightMap.GetLength (1);
 

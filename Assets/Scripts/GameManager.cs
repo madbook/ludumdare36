@@ -1,28 +1,24 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
-public class GameManager : MonoBehaviour
-{
+public class GameManager : MonoBehaviour {
     public int width;
     public int height;
-    public enum Action {Wet, Dry, Cold, Hot, Raise, Lower, Inspect};
-    public Action currentAction;
     public bool upateEachTick = true;
-    public int brushMagnitude = 10;
-    private float atmosphericDiffusion = .01f; //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
     public bool useTemplateNode = false;
+
     public BoardNode templateNode;
     public Text actionInfoText;
 
+    //The amount adjacent blocks "blur" their props per tick.  Magnified by 4, since 4 cardinal neighbors influence you.
+    float ATMOSPHERIC_DIFFUSION = .01f;
+
     BoardNode[,] board;
+    Size boardSize;
     BoardDisplay display;
+    Position cursorPosition;
 
-    const float paintInterval = .2f;
-    bool isPaintEnabled = true;
-
-    void Start()
-    {
+    void Start() {
         if (useTemplateNode) {
             board = BoardGenerator.CreateUniformBoard (width, height, templateNode);
         } else {
@@ -33,52 +29,19 @@ public class GameManager : MonoBehaviour
         if (display != null) {
             display.DrawBoard(board);
         }
-
-        RefreshActionText ();
-    }
-
-    void RefreshActionText () {
-        actionInfoText.text = GetActionText() + " | " + brushMagnitude;
     }
 
     void SetInspectText (BoardNode node, Biome biome, int x, int y) {
         actionInfoText.text = "Inspecting {" + x + "," + y + "}: " + biome.moisture + "(" + node.moisture + ") " + biome.altitude + "(" + node.altitude + ") " + biome.temperature + "(" + node.temperature + ")";
     }
-
-    void SetAction (Action action) {
-        currentAction = action;
-        RefreshActionText();
-    }
-
-    string GetActionText () {
-        if (currentAction == Action.Wet) {
-            return "Wet";
-        } else if (currentAction == Action.Dry) {
-            return "Dry";
-        } else if (currentAction == Action.Raise) {
-            return "Raise";
-        } else if (currentAction == Action.Lower) {
-            return "Lower";
-        } else if (currentAction == Action.Hot) {
-            return "Hot";
-        } else if (currentAction == Action.Cold) {
-            return "Cold";
-        } else if (currentAction == Action.Inspect) {
-            return "Inspect";
-        } else {
-            return "";
-        }
-    }
    
-    void FixedUpdate()
-    {
-        if (!upateEachTick) {
-            return;
+    void Update () {
+        if (upateEachTick) {
+            ApplyAtmosphericDiffusion ();
         }
+    }
 
-        int width = board.GetLength(0);
-        int height = board.GetLength(1);
-
+    void ApplyAtmosphericDiffusion () {
         BoardNode[, ] board_after = new BoardNode[width, height];
 
         for (int x = 0; x < width; x++)
@@ -99,28 +62,28 @@ public class GameManager : MonoBehaviour
                 }
                 
                                                         // I don't understand why this isn't 4.
-                float newMoisture = old.moisture * (1f - (3.5f-edges) * atmosphericDiffusion);
-                float newTemperature = old.temperature * (1f - (3.5f - edges) * atmosphericDiffusion);
+                float newMoisture = old.moisture * (1f - (3.5f-edges) * ATMOSPHERIC_DIFFUSION);
+                float newTemperature = old.temperature * (1f - (3.5f - edges) * ATMOSPHERIC_DIFFUSION);
                 
                  if (x > 0)
                  {
-                    newMoisture += board[x - 1, y].moisture * atmosphericDiffusion;
-                    newTemperature += board[x - 1, y].temperature * atmosphericDiffusion;
+                    newMoisture += board[x - 1, y].moisture * ATMOSPHERIC_DIFFUSION;
+                    newTemperature += board[x - 1, y].temperature * ATMOSPHERIC_DIFFUSION;
                  }
                  if (x < width-1)
                  {
-                    newMoisture += board[x + 1, y].moisture * atmosphericDiffusion;
-                    newTemperature += board[x + 1, y].temperature * atmosphericDiffusion;
+                    newMoisture += board[x + 1, y].moisture * ATMOSPHERIC_DIFFUSION;
+                    newTemperature += board[x + 1, y].temperature * ATMOSPHERIC_DIFFUSION;
                  }
                  if (y > 0)
                  {
-                    newMoisture +=board[x, y-1].moisture * atmosphericDiffusion;
-                    newTemperature += board[x, y-1].temperature * atmosphericDiffusion;
+                    newMoisture +=board[x, y-1].moisture * ATMOSPHERIC_DIFFUSION;
+                    newTemperature += board[x, y-1].temperature * ATMOSPHERIC_DIFFUSION;
                  }
                 if (y < height-1)
                  {
-                    newMoisture += board[x, y + 1].moisture * atmosphericDiffusion;
-                    newTemperature += board[x, y + 1].temperature * atmosphericDiffusion;
+                    newMoisture += board[x, y + 1].moisture * ATMOSPHERIC_DIFFUSION;
+                    newTemperature += board[x, y + 1].temperature * ATMOSPHERIC_DIFFUSION;
                  }
                 board_after[x, y] = new BoardNode(old.altitude, (int)newMoisture, (int)newTemperature, old.wind);
             }
@@ -132,93 +95,99 @@ public class GameManager : MonoBehaviour
             display.DrawBoard(board);
         }
     }
-    
-    void Update()
-    {
-        if (board == null) {
-            return;
-        }
 
-        int width = board.GetLength(0);
-        int height = board.GetLength(1);
+    public class Position {
+        public readonly int row;
+        public readonly int col;
 
-        //key presses:
-
-        // Select Action
-        if (Input.GetKeyDown (KeyCode.W)) {
-            SetAction (Action.Wet);
-        } else if (Input.GetKeyDown (KeyCode.D)) {
-            SetAction (Action.Dry);
-        } else if (Input.GetKeyDown (KeyCode.R)) {
-            SetAction (Action.Raise);
-        } else if (Input.GetKeyDown (KeyCode.L)) {
-            SetAction (Action.Lower);
-        } else if (Input.GetKeyDown (KeyCode.H)) {
-            SetAction (Action.Hot);
-        } else if (Input.GetKeyDown (KeyCode.C)) {
-            SetAction (Action.Cold);
-        } else if (Input.GetKeyDown (KeyCode.I)) {
-            SetAction (Action.Inspect);
-        } else if (Input.GetKeyDown (KeyCode.Minus)) {
-            brushMagnitude = Mathf.Clamp (brushMagnitude - 5, 5, 100);
-            RefreshActionText ();
-        } else if (Input.GetKeyDown (KeyCode.Equals)) {
-            brushMagnitude = Mathf.Clamp (brushMagnitude + 5, 5, 100);
-            RefreshActionText ();
-        }
-
-        Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
-        RaycastHit hit;
-        int mask =  1 << LayerMask.NameToLayer("Terrain");
-        bool isCollision = Physics.Raycast(ray, out hit, 100, mask);
-
-        if (isCollision) {
-            float x = hit.point.x;
-            float z = hit.point.z;
-            int row = Mathf.Clamp ((int)(x + width / 2), 0, width - 1);
-            int col = Mathf.Clamp ((int)(z + height / 2), 0, height - 1);
-
-            if (display != null) {
-                display.SetCursorPosition (board, row, col);
-            }
-
-            if (isPaintEnabled && Input.GetMouseButton (0)) {
-                BoardNode node = board[row, col];
-                if (currentAction == Action.Wet) {
-                    node.moisture = Mathf.Clamp (node.moisture + brushMagnitude, 0, 100);
-                } else if (currentAction == Action.Dry) {
-                    node.moisture = Mathf.Clamp (node.moisture - brushMagnitude, 0, 100);
-                } else if (currentAction == Action.Raise) {
-                    node.altitude = Mathf.Clamp (node.altitude + brushMagnitude, 0, 100);
-                } else if (currentAction == Action.Lower) {
-                    node.altitude = Mathf.Clamp (node.altitude - brushMagnitude, 0, 100);
-                } else if (currentAction == Action.Hot) {
-                    node.temperature = Mathf.Clamp (node.temperature + brushMagnitude, 0, 100);
-                } else if (currentAction == Action.Cold) {
-                    node.temperature = Mathf.Clamp (node.temperature - brushMagnitude, 0, 100);
-                } else if (currentAction == Action.Inspect) {
-                    Biome biome = BiomeGenerator.GetBiome (node);
-                    SetInspectText (node, biome, row, col);
-                }
-
-                board[row, col] = node;
-
-                if (display != null) {
-                    display.DrawBoard(board);
-                }
-
-                StartCoroutine (TemporarilyDisablePaint (paintInterval));
-            }
-        } else {
-            if (display != null) {
-                display.HideCursor ();
-            }
+        public Position (int row, int col) {
+            this.row = row;
+            this.col = col;
         }
     }
 
-    IEnumerator TemporarilyDisablePaint (float interval) {
-        isPaintEnabled = false;
-        yield return new WaitForSeconds (interval);
-        isPaintEnabled = true;
+    public struct Size {
+        public readonly int width;
+        public readonly int height;
+
+        public Size (int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    public enum Action {
+        Wet,
+        Dry,
+        Cold,
+        Hot,
+        Raise,
+        Lower,
+        Inspect,
+    };
+
+    public Size GetBoardSize () {
+        if (board == null) {
+            return new Size (0, 0);
+        } else {
+            int width = board.GetLength(0);
+            int height = board.GetLength(1);
+            return new Size (width, height);
+        }
+    }
+
+    public void UpdateInput (Action action, int brushMagnitude) {
+        actionInfoText.text = action.ToString () + " | " + brushMagnitude;
+    }
+
+    public void CursorDisabled () {
+        cursorPosition = null;
+        if (display != null) {
+            display.HideCursor ();
+        }
+    }
+
+    public void CursorEnabled (int row, int col) {
+        cursorPosition = new Position (row, col);
+        if (display != null) {
+            display.SetCursorPosition (board, row, col);
+        }
+    }
+
+    public void CursorUpdate (int row, int col) {
+        cursorPosition = new Position (row, col);
+        if (display != null) {
+            display.SetCursorPosition (board, row, col);
+        }
+    }
+
+    public void ApplyActionAtCursor (Action action, int brushMagnitude) {
+        if (board == null || cursorPosition == null) {
+            return;
+        }
+
+        BoardNode node = board[cursorPosition.row, cursorPosition.col];
+        if (action == Action.Wet) {
+            node.moisture = Mathf.Clamp (node.moisture + brushMagnitude, 0, 100);
+        } else if (action == Action.Dry) {
+            node.moisture = Mathf.Clamp (node.moisture - brushMagnitude, 0, 100);
+        } else if (action == Action.Raise) {
+            node.altitude = Mathf.Clamp (node.altitude + brushMagnitude, 0, 100);
+        } else if (action == Action.Lower) {
+            node.altitude = Mathf.Clamp (node.altitude - brushMagnitude, 0, 100);
+        } else if (action == Action.Hot) {
+            node.temperature = Mathf.Clamp (node.temperature + brushMagnitude, 0, 100);
+        } else if (action == Action.Cold) {
+            node.temperature = Mathf.Clamp (node.temperature - brushMagnitude, 0, 100);
+        } else if (action == Action.Inspect) {
+            Biome biome = BiomeGenerator.GetBiome (node);
+            SetInspectText (node, biome, cursorPosition.row, cursorPosition.col);
+        }
+
+        board[cursorPosition.row, cursorPosition.col] = node;
+
+        if (display != null) {
+            display.DrawBoard(board);
+        }
     }
 }
